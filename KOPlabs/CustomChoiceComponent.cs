@@ -18,21 +18,14 @@ public partial class CustomChoiceComponent : UserControl
             throw new ArgumentException("[ ! ] Item is null or empty.", nameof(item));
         }
 
-        if (!ChoiceComboBox.Items.Contains(item)) // > проверка на уник.\несовпадение
+        if (!choiceComboBox.Items.Contains(item)) // > проверка на уник.\несовпадение
         {
-            ChoiceComboBox.Items.Add(item);
+            choiceComboBox.Items.Add(item);
         }
         else
         {
             throw new ArgumentException("[ * ] Not unique.", nameof(item));
         }
-    }
-
-    public void btnAdd_Click(object sender, EventArgs e)
-    {
-        string itemToAdd = choiceTextBox.Text;
-        AddItem(itemToAdd);
-        choiceTextBox.Clear();
     }
 
     /* Что-то от лукавого, иначе не принимает отсутствие сериализации */
@@ -41,18 +34,18 @@ public partial class CustomChoiceComponent : UserControl
     // пуб. Свойство для установки (SET) и получения (GET)
     public string SelectedValue
     {
-        get => ChoiceComboBox.SelectedItem?.ToString() ?? string.Empty;
+        get => choiceComboBox.SelectedItem?.ToString() ?? string.Empty;
         set
         {
             // Проверка: существует или пустое сущ.-ее значение
-            if (ChoiceComboBox.Items.Contains(value))
+            if (choiceComboBox.Items.Contains(value))
             {
-                ChoiceComboBox.SelectedItem = value;
+                choiceComboBox.SelectedItem = value;
             }
-            else if (string.IsNullOrEmpty(value) && ChoiceComboBox.SelectedItem != null)
+            else if (string.IsNullOrEmpty(value) && choiceComboBox.SelectedItem != null)
             {
                 // Если передана пустая строка \ что-то было выбрано = снимаем выбор
-                ChoiceComboBox.SelectedItem = null;
+                choiceComboBox.SelectedItem = null;
             }
         }
     }
@@ -64,5 +57,5 @@ public partial class CustomChoiceComponent : UserControl
     }
 
     // [ - ] Метод очистки
-    public void Clear() => ChoiceComboBox.Items.Clear();
+    public void Clear() => choiceComboBox.Items.Clear();
 }

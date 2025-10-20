@@ -29,7 +29,6 @@ partial class CustomPatternComponent
     private void InitializeComponent()
     {
         inputTextBox = new TextBox();
-        patternComboBox = new ComboBox();
         resultLabel = new Label();
         SuspendLayout();
         // 
@@ -37,42 +36,32 @@ partial class CustomPatternComponent
         // 
         inputTextBox.Location = new Point(45, 42);
         inputTextBox.Name = "inputTextBox";
-        inputTextBox.Size = new Size(401, 39);
+        inputTextBox.Size = new Size(447, 39);
         inputTextBox.TabIndex = 2;
         inputTextBox.TextChanged += InputTextBox_TextChanged;
-        // 
-        // patternComboBox
-        // 
-        patternComboBox.FormattingEnabled = true;
-        patternComboBox.Location = new Point(45, 104);
-        patternComboBox.Name = "patternComboBox";
-        patternComboBox.Size = new Size(401, 40);
-        patternComboBox.TabIndex = 3;
         // 
         // resultLabel
         // 
         resultLabel.AutoSize = true;
-        resultLabel.Location = new Point(45, 280);
+        resultLabel.Location = new Point(45, 110);
         resultLabel.Name = "resultLabel";
-        resultLabel.Size = new Size(314, 32);
+        resultLabel.Size = new Size(447, 32);
         resultLabel.TabIndex = 4;
-        resultLabel.Text = "status : if passed - displayed";
+        resultLabel.Text = "status : if passed - displayed/shown here";
         // 
         // CustomPatternComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
         Controls.Add(resultLabel);
-        Controls.Add(patternComboBox);
         Controls.Add(inputTextBox);
         Name = "CustomPatternComponent";
-        Size = new Size(500, 351);
+        Size = new Size(535, 186);
         ResumeLayout(false);
         PerformLayout();
     }
 
     #endregion
     private TextBox inputTextBox;
-    private ComboBox patternComboBox;
     private Label resultLabel;
 }

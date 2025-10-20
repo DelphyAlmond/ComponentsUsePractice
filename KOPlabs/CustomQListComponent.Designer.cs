@@ -29,10 +29,6 @@ partial class CustomQListComponent
     private void InitializeComponent()
     {
         dataListBox = new ListBox();
-        BtnAddToList = new Button();
-        BtnRemove = new Button();
-        regexTextBox = new TextBox();
-        valuesTextBox = new TextBox();
         SuspendLayout();
         // 
         // dataListBox
@@ -41,67 +37,20 @@ partial class CustomQListComponent
         dataListBox.FormattingEnabled = true;
         dataListBox.Location = new Point(42, 39);
         dataListBox.Name = "dataListBox";
-        dataListBox.Size = new Size(967, 164);
+        dataListBox.Size = new Size(537, 676);
         dataListBox.TabIndex = 0;
-        // 
-        // BtnAddToList
-        // 
-        BtnAddToList.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-        BtnAddToList.Location = new Point(42, 329);
-        BtnAddToList.Name = "BtnAddToList";
-        BtnAddToList.Size = new Size(239, 53);
-        BtnAddToList.TabIndex = 1;
-        BtnAddToList.Text = "Add to list";
-        BtnAddToList.UseVisualStyleBackColor = true;
-        BtnAddToList.Click += BtnAddToList_Click;
-        // 
-        // BtnRemove
-        // 
-        BtnRemove.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-        BtnRemove.Location = new Point(747, 329);
-        BtnRemove.Name = "BtnRemove";
-        BtnRemove.Size = new Size(262, 53);
-        BtnRemove.TabIndex = 2;
-        BtnRemove.Text = "Remove & Clean";
-        BtnRemove.UseVisualStyleBackColor = true;
-        BtnRemove.Click += BtnRemove_Click;
-        // 
-        // regexTextBox
-        // 
-        regexTextBox.Location = new Point(404, 254);
-        regexTextBox.Name = "regexTextBox";
-        regexTextBox.Size = new Size(605, 39);
-        regexTextBox.TabIndex = 3;
-        // * regexTextBox.TextChanged += regexTextBox_TextChanged;
-
-        // 
-        // valuesTextBox
-        // 
-        valuesTextBox.Location = new Point(42, 254);
-        valuesTextBox.Name = "valuesTextBox";
-        valuesTextBox.Size = new Size(239, 39);
-        valuesTextBox.TabIndex = 4;
         // 
         // CustomQListComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
-        Controls.Add(valuesTextBox);
-        Controls.Add(regexTextBox);
-        Controls.Add(BtnRemove);
-        Controls.Add(BtnAddToList);
         Controls.Add(dataListBox);
         Name = "CustomQListComponent";
-        Size = new Size(1046, 418);
+        Size = new Size(625, 784);
         ResumeLayout(false);
-        PerformLayout();
     }
 
     #endregion
 
     private ListBox dataListBox;
-    private Button BtnAddToList;
-    private Button BtnRemove;
-    private TextBox regexTextBox;
-    private TextBox valuesTextBox;
 }
