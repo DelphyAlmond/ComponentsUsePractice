@@ -52,5 +52,6 @@ partial class CustomQListComponent
 
     #endregion
 
-    private ListBox dataListBox;
+    // * private \
+    public ListBox dataListBox;
 }

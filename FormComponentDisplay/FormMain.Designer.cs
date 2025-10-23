@@ -28,12 +28,66 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Form1";
+            tabControls = new TabControl();
+            menuStrip = new MenuStrip();
+            DirectoriesToolStripMenuItem = new ToolStripMenuItem();
+            ReportsToolStripMenuItem = new ToolStripMenuItem();
+            menuStrip.SuspendLayout();
+            SuspendLayout();
+            // 
+            // tabControls
+            // 
+            tabControls.Dock = DockStyle.Fill;
+            tabControls.Location = new Point(0, 40);
+            tabControls.Name = "tabControls";
+            tabControls.SelectedIndex = 0;
+            tabControls.Size = new Size(1423, 924);
+            tabControls.TabIndex = 0;
+            tabControls.DoubleClick += TabControls_DoubleClick;
+            // 
+            // menuStrip
+            // 
+            menuStrip.ImageScalingSize = new Size(32, 32);
+            menuStrip.Items.AddRange(new ToolStripItem[] { DirectoriesToolStripMenuItem, ReportsToolStripMenuItem });
+            menuStrip.Location = new Point(0, 0);
+            menuStrip.Name = "menuStrip";
+            menuStrip.Size = new Size(1423, 40);
+            menuStrip.TabIndex = 1;
+            menuStrip.Text = "menu";
+            // 
+            // DirectoriesToolStripMenuItem
+            // 
+            DirectoriesToolStripMenuItem.Name = "DirectoriesToolStripMenuItem";
+            DirectoriesToolStripMenuItem.Size = new Size(184, 36);
+            DirectoriesToolStripMenuItem.Text = "Справочники";
+            // 
+            // ReportsToolStripMenuItem
+            // 
+            ReportsToolStripMenuItem.Name = "ReportsToolStripMenuItem";
+            ReportsToolStripMenuItem.Size = new Size(116, 36);
+            ReportsToolStripMenuItem.Text = "Отчеты";
+            // 
+            // FormMain
+            // 
+            AutoScaleDimensions = new SizeF(13F, 32F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1423, 964);
+            Controls.Add(tabControls);
+            Controls.Add(menuStrip);
+            MainMenuStrip = menuStrip;
+            Name = "FormMain";
+            Text = "FormComponentsKeeper";
+            menuStrip.ResumeLayout(false);
+            menuStrip.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private TabControl tabControls;
+        private MenuStrip menuStrip;
+        private ToolStripMenuItem DirectoriesToolStripMenuItem;
+        private ToolStripMenuItem ReportsToolStripMenuItem;
     }
 }

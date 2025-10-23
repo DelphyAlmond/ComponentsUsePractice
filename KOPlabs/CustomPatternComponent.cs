@@ -8,7 +8,10 @@ public partial class CustomPatternComponent : UserControl
     private readonly CompToolTipManager _toolTipManager;
 
     // Пуб. свойство для уст. и получ. регулярного выражения для шаблона
-    private Regex ValidationPattern
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+
+    public Regex ValidationPattern
     {
         get => _validationPattern;
         set

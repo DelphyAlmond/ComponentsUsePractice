@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
@@ -10,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ContractLib\ContractLib.csproj" />
+    <ProjectReference Include="..\KOPlabs\ComponentLib.csproj" />
   </ItemGroup>
 
 </Project>
