@@ -19,8 +19,8 @@ public partial class ReportDataGridView : UserControl
 
     private void LoadCities()
     {
-        var positions = reportDb.GetDestination();
-        cityFilterCB.Items.AddRange(positions.ToArray());
+        var cities = reportDb.GetDestination();
+        cityFilterCB.Items.AddRange(cities);
     }
 
     private void ConfigureDataGridView()

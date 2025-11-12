@@ -6,14 +6,14 @@ namespace ReportsControl;
 
 public class ReportDbConnection
 {
-    private string connectionString => "Host=127.0.0.8;Port=5472;Database=postgres;Username=Del8a;Password=del8almond";
+    private string connectionString => "Host=127.0.0.1;Port=5472;Database=componentdb;Username=Del8a;Password=del8almond";
 
     public List<Order> GetEmployeesByPosition(string position)
     {
         try
         {
             using var connection = new NpgsqlConnection(connectionString);
-            string query = "SELECT * FROM orders WHERE city=@Destination";
+            string query = "SELECT * FROM orders WHERE destination=@Destination";
             var list = connection.Query<Order>(query, new { Position = position }).ToList();
             return list;
         }
@@ -29,7 +29,7 @@ public class ReportDbConnection
         try
         {
             using var connection = new NpgsqlConnection(connectionString);
-            var query = "SELECT city FROM cities";
+            var query = "SELECT name FROM cities";
             var list = connection.Query<string>(query).ToList();
             return list;
         }
