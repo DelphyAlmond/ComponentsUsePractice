@@ -1,6 +1,6 @@
 ﻿namespace ReportsControl
 {
-    partial class UserControl1
+    partial class ReportDataGridView
     {
         /// <summary>
         /// Required designer variable.

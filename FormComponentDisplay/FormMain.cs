@@ -22,7 +22,6 @@ public partial class FormMain : Form
     public FormMain()
     {
         InitializeComponent();
-        InitializeComponent();
 
         _configuration = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)

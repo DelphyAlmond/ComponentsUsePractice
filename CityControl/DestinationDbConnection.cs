@@ -1,5 +1,26 @@
-﻿namespace CityControl;
+﻿using Dapper;
+using Npgsql;
 
-internal class DestinationDbConnection
+namespace CityControl;
+
+public class DestinationDbConnection
 {
+    private string connectionString => "Host=127.0.0.8;Port=5472;Database=postgres;Username=Del8a;Password=del8almond";
+
+    public List<string> ReadCities()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(connectionString);
+            var query = "SELECT city FROM cities";
+            var list = connection.Query<string>(query).ToList();
+            return list;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("[ Error ] Ошибка чтения городов");
+            return null;
+        }
+    }
 }
+

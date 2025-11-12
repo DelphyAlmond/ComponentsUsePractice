@@ -5,7 +5,7 @@ namespace OrderControl;
 
 public class OrderDbConnection
 {
-    private string connectionString => "Host=127.0.0.1;Port=5472;Database=componentDBorders;Username=Del8a;Password=del8almond";
+    private string connectionString => "Host=127.0.0.8;Port=5472;Database=postgres;Username=Del8a;Password=del8almond";
 
     public void AddOrder(Order order)
     {

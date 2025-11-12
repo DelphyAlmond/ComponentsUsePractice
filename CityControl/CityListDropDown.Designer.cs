@@ -42,13 +42,13 @@
             citiesDGV.Size = new Size(401, 478);
             citiesDGV.TabIndex = 0;
             // 
-            // UserControl1
+            // CityListDropDown
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.LightCyan;
             Controls.Add(citiesDGV);
-            Name = "UserControl1";
+            Name = "CityListDropDown";
             Size = new Size(440, 522);
             ((System.ComponentModel.ISupportInitialize)citiesDGV).EndInit();
             ResumeLayout(false);

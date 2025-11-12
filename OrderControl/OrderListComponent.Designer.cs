@@ -28,30 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            customqListComponent = new ComponentLib.CustomQListComponent();
             SuspendLayout();
-            // 
-            // customqListComponent
-            // 
-            customqListComponent.BackColor = Color.Cornsilk;
-            customqListComponent.Location = new Point(18, 0);
-            customqListComponent.Name = "customqListComponent";
-            customqListComponent.Size = new Size(669, 711);
-            customqListComponent.TabIndex = 0;
             // 
             // OrderListComponent
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.LightCyan;
-            Controls.Add(customqListComponent);
             Name = "OrderListComponent";
             Size = new Size(706, 711);
             ResumeLayout(false);
         }
 
         #endregion
-
-        private ComponentLib.CustomQListComponent customqListComponent;
     }
 }

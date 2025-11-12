@@ -1,4 +1,6 @@
-﻿namespace OrderControl;
+﻿using System.Text.RegularExpressions;
+
+namespace OrderControl;
 
 public partial class EditAddForm : Form
 {
@@ -50,7 +52,7 @@ public partial class EditAddForm : Form
     {
         if (isModified)
         {
-            var result = MessageBox.Show("Есть несохраненные изменения. Вы действительно хотите выйти без сохранения?", "Да", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show("[ * ] Есть несохраненные изменения. Вы действительно хотите выйти без сохранения?", "Да", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.No)
             {
                 e.Cancel = true;
@@ -60,19 +62,29 @@ public partial class EditAddForm : Form
 
     private void confirmBtn_Click(object sender, EventArgs e)
     {
-        orderEntity.FIO = fioTB.Text;
-        orderEntity.MovementNotes = notesTB.Text;
-        orderEntity.Destination = customChoiceComponent.Text;
+        try
+        {
+            orderEntity.FIO = fioTB.Text;
+            orderEntity.MovementNotes = notesTB.Text;
+            orderEntity.Destination = customChoiceComponent.Text;
 
-        if (orderEntity.Id.Version == 0)
-        {
-            DBconnection.AddOrder(orderEntity);
+            customPatternComponent.Value = ReceiveDTP.Value.ToString("yyyy.MM.dd");
+            orderEntity.ReceiveDate = customPatternComponent.Value;
+
+            if (orderEntity.Id.Version == 0)
+            {
+                DBconnection.AddOrder(orderEntity);
+            }
+            else
+            {
+                DBconnection.UpdateOrder(orderEntity);
+            }
+            isModified = false;
+            RequestRefreshList.Invoke();
         }
-        else
+        catch (Exception ex)
         {
-            DBconnection.UpdateOrder(orderEntity);
+            throw new Exception("[ ! ] Couldn't confirm changes: " + ex.Message);
         }
-        isModified = false;
-        RequestRefreshList.Invoke();
     }
 }
