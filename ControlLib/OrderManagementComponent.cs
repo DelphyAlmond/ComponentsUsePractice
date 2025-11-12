@@ -8,26 +8,17 @@ public partial class OrderManagementComponent : UserControl
     private readonly CompToolTipManager _toolTipManager = new CompToolTipManager();
     private readonly CustomQListComponent _customQListComponent;
 
-    public OrderManagementComponent()
+    // [ + ] constructor parameters
+    public OrderManagementComponent(string? displayTemplate, Dictionary<string, string>? fieldMap)
     {
         InitializeComponent();
 
         _customQListComponent = new CustomQListComponent();
         _customQListComponent.Dock = DockStyle.Fill;
-        this.Controls.Add(_customQListComponent);
+        Controls.Add(_customQListComponent);
 
-        // [ * ] adapted : TemplateGen for OrderEntity
-        _customQListComponent.SetTemplateForDisplay("Город: {city}, ID: {id}, ФИО: {customer}, Дата получения: {receiveDate}.");
-        _customQListComponent.SetCustomPropertyMapping(new Dictionary<string, string>
-        {
-            { "city", "DestinationCity" },
-            { "id", "Id" },
-            { "customer", "CustomerFullName" },
-            { "receiveDate", "OrderReceiveDate" }
-            // мог бы быть { "movement", "MovementNotes" } *
-        });
-
-        LoadOrders(); // > базовая загрузка
+        // [ * ] enable parameters settling from outside
+        _customQListComponent.SetTemplateForDisplay(displayTemplate);
 
         _customQListComponent.SelectionChanged += (sender, e) => _toolTipManager.Hide(_customQListComponent);
     }

@@ -5,50 +5,70 @@ using System.IO; //> для файловой системы
 using System.Linq; // > для OrderBy
 using System.Reflection;
 using System.Windows.Forms;
+using Microsoft.Extensions.Configuration;
 
 using ContractLib;
 
 public partial class FormMain : Form
 {
     // private Dictionary<string, UserControl>
-    // _loadedControls = new Dictionary<string, UserControl>();
     // [ * ] -> tabControls.TabPages.ContainsKey, так как tabControls уже хранит все
+
+    private readonly Dictionary<string, UserControl> _loadedControls = new Dictionary<string, UserControl>();
+    private static IConfiguration? _configuration;
 
     private string _customComponentsPath = Path.Combine(AppContext.BaseDirectory, "ControlLib");
 
     public FormMain()
     {
         InitializeComponent();
+        InitializeComponent();
+
+        _configuration = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .Build();
+
         try
         {
-            var extensions = LoadExtensions(); // Вызов реальной загрузки
-
-            // Заполнение меню "Справочники" & "Отчеты"
-            foreach (var component in extensions.Where(c => c.ComponentCategory == "Справочники"))
+            var extensions = LoadExtensions();
+            foreach (var extension in extensions.Where(e => e.Category == "SimpleReference" || e.Category == "ComplexReference"))
             {
-                var menu = new ToolStripMenuItem { Text = component.ComponentName };
-                menu.Click += (sender, e) => { OpenControl(component); }; // > передача компонент в OpenControl
+                var menu = new ToolStripMenuItem
+                {
+                    Text = extension.MenuTitle
+                };
+                menu.Click += (sender, e) =>
+                {
+                    OpenControl((IComponentContract)extension.GetComponentControl);
+                };
                 DirectoriesToolStripMenuItem.DropDownItems.Add(menu);
             }
-            foreach (var component in extensions.Where(c => c.ComponentCategory == "Отчеты")) // > выборка
+
+            foreach (var extension in extensions.Where(e => e.Category == "Report"))
             {
-                // _controls.Add(extension.Id, extension.Control);
-                // [ * ] -> теперь UserControl создается при открытии вкладки
-                var menu = new ToolStripMenuItem { Text = component.ComponentName };
-                menu.Click += (sender, e) => { OpenControl(component); };
+                _loadedControls.Add(extension.Id, extension.GetComponentControl);
+                var menu = new ToolStripMenuItem
+                {
+                    Text = extension.MenuTitle
+                };
+                menu.Click += (sender, e) =>
+                {
+                    OpenControl((IComponentContract)extension.GetComponentControl);
+                };
                 ReportsToolStripMenuItem.DropDownItems.Add(menu);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "[ ! ] Ошибка при загрузке компонент", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, "[ Error ] Ошибка при загрузке компонентов", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
     // Добавление нового контрола
     private void OpenControl(IComponentContract component) // > принимает объект компонента
     {
-        string tabPageKey = component.ComponentId;
+        string tabPageKey = component.Id;
 
         // Проверка, что такой контрол еще не был добавлен
         if (tabControls.TabPages.ContainsKey(tabPageKey))
@@ -57,13 +77,13 @@ public partial class FormMain : Form
             return;
         }
 
-        UserControl componentControl = component.GetComponentControl(); // Получаем UserControl из контракта
+        UserControl componentControl = component.GetComponentControl; // Получаем UserControl из контракта
         componentControl.Dock = DockStyle.Fill; // > расстягиваем на всю вкладку
 
         var tabPage = new TabPage
         {
             Name = tabPageKey,
-            Text = component.ComponentName, // > ComponentName как заголовок вкладки
+            Text = component.MenuTitle, // > как заголовок вкладки
             UseVisualStyleBackColor = true
         };
         tabPage.Controls.Add(componentControl);

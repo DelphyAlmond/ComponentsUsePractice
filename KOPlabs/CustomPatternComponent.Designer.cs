@@ -34,7 +34,7 @@ partial class CustomPatternComponent
         // 
         // inputTextBox
         // 
-        inputTextBox.Location = new Point(45, 42);
+        inputTextBox.Location = new Point(16, 13);
         inputTextBox.Name = "inputTextBox";
         inputTextBox.Size = new Size(447, 39);
         inputTextBox.TabIndex = 2;
@@ -43,20 +43,21 @@ partial class CustomPatternComponent
         // resultLabel
         // 
         resultLabel.AutoSize = true;
-        resultLabel.Location = new Point(45, 110);
+        resultLabel.Location = new Point(16, 67);
         resultLabel.Name = "resultLabel";
-        resultLabel.Size = new Size(447, 32);
+        resultLabel.Size = new Size(234, 32);
         resultLabel.TabIndex = 4;
-        resultLabel.Text = "status : if passed - displayed/shown here";
+        resultLabel.Text = "status template-pass";
         // 
         // CustomPatternComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
+        BackColor = Color.Cornsilk;
         Controls.Add(resultLabel);
         Controls.Add(inputTextBox);
         Name = "CustomPatternComponent";
-        Size = new Size(535, 186);
+        Size = new Size(475, 125);
         ResumeLayout(false);
         PerformLayout();
     }

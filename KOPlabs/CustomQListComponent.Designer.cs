@@ -35,23 +35,23 @@ partial class CustomQListComponent
         // 
         dataListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dataListBox.FormattingEnabled = true;
-        dataListBox.Location = new Point(42, 39);
+        dataListBox.Location = new Point(12, 12);
         dataListBox.Name = "dataListBox";
-        dataListBox.Size = new Size(537, 676);
+        dataListBox.Size = new Size(586, 516);
         dataListBox.TabIndex = 0;
         // 
         // CustomQListComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
+        BackColor = Color.Cornsilk;
         Controls.Add(dataListBox);
         Name = "CustomQListComponent";
-        Size = new Size(625, 784);
+        Size = new Size(613, 541);
         ResumeLayout(false);
     }
 
     #endregion
 
-    // * private \
-    public ListBox dataListBox;
+    private ListBox dataListBox;
 }

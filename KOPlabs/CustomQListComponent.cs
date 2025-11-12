@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
+using System.Text.RegularExpressions;
 namespace ComponentLib;
 
 public partial class CustomQListComponent : UserControl
 {
     private readonly CompToolTipManager _toolTipManager;
-    // private List<List<string>> _dataObjects; // - Удалено
     private readonly TemplateGen _templateGenerator;
 
     public CustomQListComponent()
@@ -32,19 +32,24 @@ public partial class CustomQListComponent : UserControl
         }
     }
 
-    // Добавляет в конец списка ListBox сопоставленную по текущему сконфигурированному шаблону
-    public void AddItem(Dictionary<string, string> values) // Изменена сигнатура
+    // Добавляет в конец списка ListBox строчку, сопоставленную по текущему сконфигурированному шаблону
+    public void AddItem(string rowSepWithValues)
     {
-        if (values == null)
-        {
-            _toolTipManager.ShowWarning(dataListBox, "[ ! ] Словарь значений не может быть пустым.");
-            return;
-        }
-
         try
         {
-            string row = _templateGenerator.FormatOutputString(values); // Проверка валидности и форматирование
-            dataListBox.Items.Add(row); // полноценная фраза, сопоставленная шаблоном
+            List<string> values = rowSepWithValues.Split(";").ToList();
+
+            // Сопоставляем, подсовывая на места после фраз шаблона:
+            string resultInfoLine = string.Empty;
+            int v = 0;
+            foreach (var key in _templateGenerator.PhraseMapping.Keys)
+            {
+                resultInfoLine += key + " ";
+                resultInfoLine += values[v];
+                v++;
+            }
+
+            dataListBox.Items.Add(resultInfoLine); // > полноценная фраза, сопоставленная шаблоном
             _toolTipManager.Hide(dataListBox);
         }
         catch (Exception ex)
@@ -54,7 +59,7 @@ public partial class CustomQListComponent : UserControl
     }
 
     // [ ! ] Публичный параметризованный метод для получения объекта.
-    // - получает выбранный элемент из ListBox (строку-фразу), преобразует ее в Dictionary<string, string> значений
+    // - получает выбранный элемент из ListBox (строку-фразу)
     // и заполняет соответствующие свойства/поля в созданном объекте типа T с использованием рефлексии
     public T GetItemFromSelected<T>() where T : new()
     {
@@ -69,83 +74,92 @@ public partial class CustomQListComponent : UserControl
             throw new Exception("[ ! ] Выбранный элемент ListBox пуст или недействителен.");
         }
 
-        Dictionary<string, string> parsedValues;
-        try
-        {
-            parsedValues = _templateGenerator.ParseFormattedString(selectedFormattedString);
-        }
-        catch (Exception ex)
-        {
-            _toolTipManager.ShowError(dataListBox, $"[ ! ] Ошибка парсинга выбранной строки '{selectedFormattedString}': {ex.Message}");
-            throw new Exception($"[ ! ] Не удалось извлечь значения из выбранной строки: {ex.Message}", ex);
-        }
-
         T obj = Activator.CreateInstance<T>();
         Type type = typeof(T);
 
-        // Итерируем по всем извлеченным значениям из строки
-        foreach (var entry in parsedValues)
+        // Для значений параметров
+        List<string> values = [];
+
+        int valueIndex = 0;
+        foreach (var pare in _templateGenerator.PhraseMapping)
         {
-            string propertyOrFieldName = entry.Key;
-            string valueToSet = entry.Value;
+            string textPhrase = pare.Key;
+            string fieldOrProperty = pare.Value;
 
-            // Используем рефлексию для поиска свойства/поля в объекте T
-            PropertyInfo? property = type.GetProperty(propertyOrFieldName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            FieldInfo? field = null;
+            // Позиции строк информации (для вычленения значений)
+            int phrasePosition = selectedFormattedString.IndexOf(textPhrase);
 
-            if (property == null) // Если свойство не найдено, ищем поле
+            // [ ! ] The value is everything from the start of remainingText up to the text phrase
+            string value = selectedFormattedString.Substring(0, phrasePosition).Trim(); // удаление фразы, её конец -> позиция значения
+            // Видоизм.\перезапись состояния строки, лидирующий эл.-т - value
+            selectedFormattedString = selectedFormattedString.Substring(phrasePosition + textPhrase.Length);
+
+            // > поле\св.-во существует
+            if (!string.IsNullOrEmpty(fieldOrProperty) && !string.IsNullOrEmpty(value))
             {
-                field = type.GetField(propertyOrFieldName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                SetPropertyOrField(obj, type, fieldOrProperty, value, valueIndex);
             }
 
-            if (property != null || field != null)
-            {
-                Type targetType = property != null ? property.PropertyType : field!.FieldType;
-                object? convertedValue = null;
+            valueIndex++;
+        }
 
-                try
-                {
-                    if (targetType == typeof(string))
-                    {
-                        convertedValue = valueToSet;
-                    }
-                    else if (!string.IsNullOrEmpty(valueToSet))
-                    {
-                        convertedValue = Convert.ChangeType(valueToSet, targetType);
-                    }
-                    if (property != null && property.CanWrite)
-                    {
-                        property.SetValue(obj, convertedValue);
-                    }
-                    else if (field != null) // Поля всегда записываемы, если они не readonly
-                    {
-                        field!.SetValue(obj, convertedValue);
-                    }
-                    else
-                    {
-                        _toolTipManager.ShowWarning(dataListBox, $"[ * ] Свойство '{propertyOrFieldName}' найдено, но не записываемо. Значение '{valueToSet}' пропущено.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _toolTipManager.ShowError(dataListBox, $"[ ! ] Ошибка преобразования значения '{valueToSet}' для члена '{propertyOrFieldName}' в тип '{targetType.Name}'.");
-                    throw new Exception($"[ ! ] Не удалось установить значение '{valueToSet}' для члена '{propertyOrFieldName}': {ex.Message}", ex);
-                }
-            }
-            else
+        // Process any remaining text after the last phrase as the final value
+        if (!string.IsNullOrEmpty(selectedFormattedString.Trim()))
+        {
+            var lastMapping = _templateGenerator.PhraseMapping.Last();
+            if (!string.IsNullOrEmpty(lastMapping.Value))
             {
-                _toolTipManager.ShowWarning(dataListBox, $"[ * ] В классе '{type.Name}' не найдено публичное свойство или поле '{propertyOrFieldName}'. Значение '{valueToSet}' пропущено.");
+                SetPropertyOrField(obj, type, lastMapping.Value, selectedFormattedString.Trim(), valueIndex);
             }
         }
 
         return obj;
     }
 
-    // Устанавливает сопоставление имен плейсхолдеров с именами свойств
-    public void SetCustomPropertyMapping(Dictionary<string, string> newMapping)
+    private void SetPropertyOrField<T>(T obj, Type type, string propertyName, string value, int valueIndex)
     {
-        _templateGenerator.SetCustomPropertyMapping(newMapping);
-        _toolTipManager.Hide(dataListBox);
+        PropertyInfo? property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        FieldInfo? field = null;
+
+        if (property == null)
+        {
+            field = type.GetField(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        }
+
+        if (property != null || field != null)
+        {
+            Type targetType = property != null ? property.PropertyType : field!.FieldType;
+            object? convertedValue = null;
+
+            try
+            {
+                if (targetType == typeof(string))
+                {
+                    convertedValue = value;
+                }
+                else if (!string.IsNullOrEmpty(value))
+                {
+                    convertedValue = Convert.ChangeType(value, targetType);
+                }
+
+                if (property != null && property.CanWrite)
+                {
+                    property.SetValue(obj, convertedValue);
+                }
+                else if (field != null)
+                {
+                    field.SetValue(obj, convertedValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                _toolTipManager.ShowWarning(dataListBox, $"[ ! ] Ошибка преобразования значения '{value}' для '{propertyName}': {ex.Message}");
+            }
+        }
+        else
+        {
+            _toolTipManager.ShowWarning(dataListBox, $"[ * ] Не найдено свойство/поле '{propertyName}'. Значение '{value}' пропущено.");
+        }
     }
 
     private void DataListBox_SelectedIndexChanged(object sender, EventArgs e)
