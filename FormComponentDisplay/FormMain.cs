@@ -8,16 +8,12 @@ using System.Windows.Forms;
 using Microsoft.Extensions.Configuration;
 
 using ContractLib;
+using System.Configuration;
 
 public partial class FormMain : Form
 {
-    // private Dictionary<string, UserControl>
-    // [ * ] -> tabControls.TabPages.ContainsKey, так как tabControls уже хранит все
-
-    private readonly Dictionary<string, UserControl> _loadedControls = new Dictionary<string, UserControl>();
+    private readonly Dictionary<string, UserControl> _controls = new Dictionary<string, UserControl>();
     private static IConfiguration? _configuration;
-
-    private string _customComponentsPath = Path.Combine(AppContext.BaseDirectory, "ControlLib");
 
     public FormMain()
     {
@@ -39,97 +35,142 @@ public partial class FormMain : Form
                 };
                 menu.Click += (sender, e) =>
                 {
-                    OpenControl((IComponentContract)extension.GetComponentControl);
+                    OpenControl(extension.Id, extension.MenuTitle, extension.GetComponentControl);
                 };
                 DirectoriesToolStripMenuItem.DropDownItems.Add(menu);
             }
 
             foreach (var extension in extensions.Where(e => e.Category == "Report"))
             {
-                _loadedControls.Add(extension.Id, extension.GetComponentControl);
+                _controls.Add(extension.Id, extension.GetComponentControl);
                 var menu = new ToolStripMenuItem
                 {
                     Text = extension.MenuTitle
                 };
                 menu.Click += (sender, e) =>
                 {
-                    OpenControl((IComponentContract)extension.GetComponentControl);
+                    OpenControl(extension.Id, extension.MenuTitle, extension.GetComponentControl);
                 };
                 ReportsToolStripMenuItem.DropDownItems.Add(menu);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "[ Error ] Ошибка при загрузке компонентов", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, "Ошибка при загрузке компонентов", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
-    // Добавление нового контрола
-    private void OpenControl(IComponentContract component) // > принимает объект компонента
+    private void OpenControl(string id, string title, UserControl control)
     {
-        string tabPageKey = component.Id;
-
-        // Проверка, что такой контрол еще не был добавлен
-        if (tabControls.TabPages.ContainsKey(tabPageKey))
+        foreach (TabPage tab in tabControls.TabPages)
         {
-            tabControls.SelectedTab = tabControls.TabPages[tabPageKey];
-            return;
+            if (tab.Name == $"tabPage{id}")
+            {
+                tabControls.SelectedTab = tab;
+                return;
+            }
         }
-
-        UserControl componentControl = component.GetComponentControl; // Получаем UserControl из контракта
-        componentControl.Dock = DockStyle.Fill; // > расстягиваем на всю вкладку
 
         var tabPage = new TabPage
         {
-            Name = tabPageKey,
-            Text = component.MenuTitle, // > как заголовок вкладки
+            Location = new Point(4, 24),
+            Name = $"tabPage{id}",
+            Padding = new Padding(3),
+            Size = new Size(792, 398),
+            TabIndex = 0,
+            Text = title,
             UseVisualStyleBackColor = true
         };
-        tabPage.Controls.Add(componentControl);
+
+        tabPage.Controls.Add(control);
         tabControls.TabPages.Add(tabPage);
-        tabControls.SelectedTab = tabPage; // def: active
+        tabControls.SelectedTab = tabPage;
     }
 
-    private string GetComponentsPathFromConfig()
+    private List<IComponentContract> LoadExtensions()
     {
-        return _customComponentsPath;
-    }
+        var components = new List<IComponentContract>();
 
-    // Загрузка реализаций контрактов
-    private List<IComponentContract> LoadExtensions() // Возвращает список
-    {
-        List<IComponentContract> components = new List<IComponentContract>();
-        string componentsPath = GetComponentsPathFromConfig();
-        // Получ. путь к папке\проекту с исп.-мыми компонентами
-
+        string componentsPath = _configuration!["ComponentsPath"]!;
+        if (string.IsNullOrEmpty(componentsPath))
+            throw new ConfigurationErrorsException("Путь к компонентам не указан в конфигурации");
         if (!Directory.Exists(componentsPath))
-        {
-            throw new DirectoryNotFoundException($"[ ! ] Директория компонентов не найдена: {componentsPath}");
-        }
+            throw new DirectoryNotFoundException($"Каталог компонентов не найден: {componentsPath}");
 
-        foreach (string dllFile in Directory.GetFiles(componentsPath, "*.dll"))
+        string licenseFile = _configuration!["LicenseFile"]!;
+        if (string.IsNullOrEmpty(licenseFile))
+            throw new ConfigurationErrorsException("Имя файла лицензии не указано в конфигурации");
+
+        string licensePath = licenseFile;
+        LicenseLevel licenseLevel = GetLicenseLevel(licensePath);
+
+        foreach (string file in Directory.GetFiles(componentsPath, "*.dll", SearchOption.AllDirectories))
         {
+            if (file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar))
+            {
+                continue;
+            }
+
             try
             {
-                Assembly assembly = Assembly.LoadFrom(dllFile);
+                Assembly assembly = Assembly.LoadFrom(file);
                 foreach (Type type in assembly.GetTypes())
                 {
-                    if (typeof(IComponentContract).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                    if (type.IsClass && typeof(IComponentContract).IsAssignableFrom(type))
                     {
-                        IComponentContract component = (IComponentContract)Activator.CreateInstance(type)!; // Создаем экземпляр
-                        components.Add(component);
+                        IComponentContract component = (IComponentContract)Activator.CreateInstance(type)!;
+
+                        if (IsComponentAllowed(component, licenseLevel))
+                        {
+                            components.Add(component);
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"[ ! ] Ошибка загрузки компонента {dllFile}: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, $"Ошибка загрузки сборки {file}: {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        return components.ToList(); //+ OrderBy(c => c.Order) *
+
+        return components;
     }
 
-    // Закрытие вкладки
+    private LicenseLevel GetLicenseLevel(string licensePath)
+    {
+        if (!File.Exists(licensePath))
+            throw new FileNotFoundException("Файл лицензии не найден", licensePath);
+
+        string licenseContent = File.ReadAllText(licensePath);
+        licenseContent = licenseContent.Trim().ToLower();
+
+        switch (licenseContent)
+        {
+            case "minimal":
+                return LicenseLevel.Minimal;
+            case "basic":
+                return LicenseLevel.Basic;
+            case "advanced":
+                return LicenseLevel.Advanced;
+            default:
+                throw new InvalidDataException("Некорректный уровень лицензии в файле");
+        }
+    }
+
+    private bool IsComponentAllowed(IComponentContract component, LicenseLevel licenseLevel)
+    {
+        if (component.Category == "SimpleReference")
+            return licenseLevel >= LicenseLevel.Minimal;
+
+        if (component.Category == "ComplexReference")
+            return licenseLevel >= LicenseLevel.Basic;
+
+        if (component.Category == "Report")
+            return licenseLevel >= LicenseLevel.Advanced;
+
+        return false;
+    }
+
     private void TabControls_DoubleClick(object sender, EventArgs e)
     {
         if (tabControls.SelectedTab is null)
