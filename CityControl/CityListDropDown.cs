@@ -4,7 +4,7 @@ namespace CityControl
 {
     public partial class CityListDropDown : UserControl
     {
-        private DestinationDbConnection CityDB = new DestinationDbConnection();
+        private DestinationDbConnection cDbConnection = new DestinationDbConnection();
         private List<string> currentCityList = new List<string>();
 
         public CityListDropDown()
@@ -35,7 +35,7 @@ namespace CityControl
         {
             try
             {
-                currentCityList = CityDB.ReadCities();
+                currentCityList = cDbConnection.ReadCities();
                 citiesDGV.Rows.Clear();
                 foreach (var position in currentCityList)
                 {

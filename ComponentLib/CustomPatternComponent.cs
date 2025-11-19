@@ -8,7 +8,10 @@ public partial class CustomPatternComponent : UserControl
     private readonly CompToolTipManager _toolTipManager;
 
     // Пуб. свойство для уст. и получ. регулярного выражения для шаблона
-    private Regex ValidationPattern
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+
+    public Regex ValidationPattern
     {
         get => _validationPattern;
         set
@@ -21,6 +24,7 @@ public partial class CustomPatternComponent : UserControl
     public CustomPatternComponent()
     {
         InitializeComponent();
+        inputTextBox.Enabled = false;
         _toolTipManager = new CompToolTipManager();
 
         // > шаблон по умолчанию
@@ -70,19 +74,5 @@ public partial class CustomPatternComponent : UserControl
         // > вызов публичного события ValueChanged
         // [ * ] событие вызывается при изменении текста, независимо от валидации (при Value)
         ValueChanged?.Invoke(this, e);
-    }
-
-    // Метод для уст. шаблона извне (из ComboBox)
-    public void SetValidationPatternFromComboBox()
-    {
-        if (!string.IsNullOrEmpty(inputTextBox.Text) && ValidationPattern != null && !ValidationPattern.IsMatch(inputTextBox.Text))
-        {
-            _toolTipManager.ShowWarning(inputTextBox, $"[ ! ] Not consistent for current format.");
-            resultLabel.Text = "failed";
-        }
-        else
-        {
-            _toolTipManager.Hide(inputTextBox);
-        }
     }
 }

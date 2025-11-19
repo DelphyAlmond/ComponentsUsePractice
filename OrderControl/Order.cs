@@ -1,35 +1,43 @@
-﻿namespace OrderControl;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace OrderControl;
 
 public class Order
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    [Column("id")]
+    public Guid Id { get; set; }
+    [Column("fio")]
+
     public string FIO { get; set; }
 
     // Отметки о движении заказа (не более 6, в виде одной строки)
     // > Создан \ Обработан \ В пути \ Доставлен \ Получен \ Завершен
-    public string MovementNotes { get; set; } = "Создан / Обработан";
+    [Column("movementnotes")]
+    public string MovementNotes { get; set; }
 
     // Город назначения (> текстовое значение из справочника)
     // [ * ] filter criteria in reports
+    [Column("destination")]
     public string Destination { get; set; }
 
     // Дата получения заказа (* 1-3 дня от текущей даты, но хранится конкретная дата)
-    private string _receiveDate;
-    public string ReceiveDate
+    [Column("receivedate")]
+    private string ReceiveDate;
+    public string GetSetReceiveDate
     {
-        get => _receiveDate;
+        get => ReceiveDate;
         set
         {
             if (!string.IsNullOrEmpty(value))
             {
                 ValidateReceiveDate(value);
             }
-            _receiveDate = value;
+            ReceiveDate = value;
         }
     }
 
     // Validate date is within 1-3 days from current date
-    private void ValidateReceiveDate(string dateString)
+    private static void ValidateReceiveDate(string dateString)
     {
         if (DateTime.TryParse(dateString, out DateTime date))
         {
@@ -49,11 +57,9 @@ public class Order
         }
     }
 
-    public Order() { }
-
     public string ValueString
     {
-        get => string.Join(";", new List<string> { Id.ToString(), Destination, FIO, ReceiveDate, MovementNotes});
+        get => string.Join(";", new List<string> { Id.ToString() ?? " ", Destination ?? " ", FIO ?? " ", GetSetReceiveDate ?? " ", MovementNotes ?? " " });
     }
 
     public Order(Guid id, string orderer, string notes, string city, string arrivingDate)
@@ -62,21 +68,26 @@ public class Order
         FIO = orderer;
         MovementNotes = notes;
         Destination = city;
-        ReceiveDate = arrivingDate;
+        GetSetReceiveDate = arrivingDate;
     }
 
-    public bool HasRDate() => ReceiveDate != null;
+    public Order()
+    {
+        Id = Guid.NewGuid();
+    }
+
+    public bool HasRDate() => GetSetReceiveDate != null;
     // \ !string.IsNullOrEmpty(...)
 
     public DateTime? GetRDate()
     {
-        if (HasRDate()) return DateTime.Parse(ReceiveDate);
+        if (HasRDate()) return DateTime.Parse(GetSetReceiveDate);
         return null;
     }
 
     public void SetRDate(DateTime? date)
     {
-        ReceiveDate = date?.ToString("YYYY.MM.DD") ?? string.Empty;
+        GetSetReceiveDate = date?.ToString("YYYY.MM.DD") ?? string.Empty;
     }
 }
 

@@ -28,18 +28,55 @@
         /// </summary>
         private void InitializeComponent()
         {
+            addEditBtn = new Button();
+            deleteBtn = new Button();
+            listPanel = new Panel();
             SuspendLayout();
+            // 
+            // addEditBtn
+            // 
+            addEditBtn.Location = new Point(17, 762);
+            addEditBtn.Name = "addEditBtn";
+            addEditBtn.Size = new Size(812, 46);
+            addEditBtn.TabIndex = 0;
+            addEditBtn.Text = "Add\\Edit";
+            addEditBtn.UseVisualStyleBackColor = true;
+            addEditBtn.Click += addEditBtn_Click;
+            // 
+            // deleteBtn
+            // 
+            deleteBtn.Location = new Point(867, 762);
+            deleteBtn.Name = "deleteBtn";
+            deleteBtn.Size = new Size(549, 46);
+            deleteBtn.TabIndex = 1;
+            deleteBtn.Text = "Remove";
+            deleteBtn.UseVisualStyleBackColor = true;
+            deleteBtn.Click += deleteBtn_Click;
+            // 
+            // listPanel
+            // 
+            listPanel.Location = new Point(3, 15);
+            listPanel.Name = "listPanel";
+            listPanel.Size = new Size(1432, 735);
+            listPanel.TabIndex = 2;
             // 
             // OrderListComponent
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.LightCyan;
+            Controls.Add(listPanel);
+            Controls.Add(deleteBtn);
+            Controls.Add(addEditBtn);
             Name = "OrderListComponent";
-            Size = new Size(706, 711);
+            Size = new Size(1435, 824);
             ResumeLayout(false);
         }
 
         #endregion
+
+        private Button addEditBtn;
+        private Button deleteBtn;
+        private Panel listPanel;
     }
 }

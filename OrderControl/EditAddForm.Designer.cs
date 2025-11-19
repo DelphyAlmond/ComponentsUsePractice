@@ -38,6 +38,8 @@
             notesTB = new RichTextBox();
             label1 = new Label();
             ReceiveDTP = new DateTimePicker();
+            currentDestinationTB = new TextBox();
+            currentDLabel = new Label();
             SuspendLayout();
             // 
             // customChoiceComponent
@@ -124,12 +126,30 @@
             ReceiveDTP.Size = new Size(556, 39);
             ReceiveDTP.TabIndex = 9;
             // 
+            // currentDestinationTB
+            // 
+            currentDestinationTB.Location = new Point(456, 278);
+            currentDestinationTB.Name = "currentDestinationTB";
+            currentDestinationTB.Size = new Size(302, 39);
+            currentDestinationTB.TabIndex = 10;
+            // 
+            // currentDLabel
+            // 
+            currentDLabel.AutoSize = true;
+            currentDLabel.Location = new Point(216, 281);
+            currentDLabel.Name = "currentDLabel";
+            currentDLabel.Size = new Size(240, 32);
+            currentDLabel.TabIndex = 11;
+            currentDLabel.Text = "  Current chosen city:";
+            // 
             // EditAddForm
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.LightCyan;
             ClientSize = new Size(800, 640);
+            Controls.Add(currentDLabel);
+            Controls.Add(currentDestinationTB);
             Controls.Add(ReceiveDTP);
             Controls.Add(label1);
             Controls.Add(notesTB);
@@ -159,5 +179,7 @@
         private RichTextBox notesTB;
         private Label label1;
         private DateTimePicker ReceiveDTP;
+        private TextBox currentDestinationTB;
+        private Label currentDLabel;
     }
 }

@@ -2,7 +2,7 @@
 
 public partial class ReportDataGridView : UserControl
 {
-    private ReportDbConnection reportDb = new ReportDbConnection();
+    private ReportDbConnection cDbConnection = new ReportDbConnection();
 
     public ReportDataGridView()
     {
@@ -19,8 +19,11 @@ public partial class ReportDataGridView : UserControl
 
     private void LoadCities()
     {
-        var cities = reportDb.GetDestination();
-        cityFilterCB.Items.AddRange(cities);
+        var cities = cDbConnection.GetDestination();
+        for (int i = 0; i < cities.Count; i++)
+        {
+            cityFilterCB.Items.Add(cities[i]);
+        }
     }
 
     private void ConfigureDataGridView()
@@ -40,7 +43,7 @@ public partial class ReportDataGridView : UserControl
             MessageBox.Show("[ ! ] Не выбран город");
         }
 
-        var customers = reportDb.GetEmployeesByPosition(selectedStatus!);
+        var customers = cDbConnection.GetEmployeesByPosition(selectedStatus!);
         dataGridView.DataSource = customers;
 
         ConfigureDataGridView();

@@ -14,8 +14,9 @@ public partial class EditAddForm : Form
     {
         InitializeComponent();
 
-        orderEntity = order ?? new Order(Guid.NewGuid(), string.Empty, string.Empty, string.Empty, null);
+        orderEntity = order ?? new Order(Guid.NewGuid(), string.Empty, string.Empty, string.Empty, string.Empty);
         LoadDataToForm();
+        currentDestinationTB.Enabled = false;
 
         fioTB.TextChanged += (sender, e) => isModified = true;
         notesTB.TextChanged += (sender, e) => isModified = true;
@@ -32,18 +33,17 @@ public partial class EditAddForm : Form
 
         if (cities.Contains(orderEntity.Destination))
         {
-            customChoiceComponent.Text = orderEntity.Destination;
+            currentDestinationTB.Text = orderEntity.Destination.ToString();
         }
 
         // Обработка даты
-        if (!string.IsNullOrEmpty(orderEntity.ReceiveDate))
+        if (orderEntity.GetRDate() != null)
         {
-            ReceiveDTP.Value = orderEntity.GetRDate()!.Value;
-            ReceiveDTP.Enabled = true;
+            ReceiveDTP.Value = orderEntity.GetRDate().Value;
+            customPatternComponent.Value = orderEntity.GetSetReceiveDate;
         }
         else
         {
-            ReceiveDTP.Enabled = false;
             ReceiveDTP.Value = DateTime.Today;
         }
     }
@@ -69,7 +69,7 @@ public partial class EditAddForm : Form
             orderEntity.Destination = customChoiceComponent.Text;
 
             customPatternComponent.Value = ReceiveDTP.Value.ToString("yyyy.MM.dd");
-            orderEntity.ReceiveDate = customPatternComponent.Value;
+            orderEntity.GetSetReceiveDate = customPatternComponent.Value;
 
             if (orderEntity.Id.Version == 0)
             {

@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ContractLib\ContractLib.csproj" />
+	<ProjectReference Include="..\ComponentLib\ComponentLib.csproj" />
   </ItemGroup>
 
 </Project>

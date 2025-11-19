@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ContractLib\ContractLib.csproj" />
-    <ProjectReference Include="..\KOPlabs\ComponentLib.csproj" />
+	<ProjectReference Include="..\ComponentLib\ComponentLib.csproj" />
   </ItemGroup>
 
 </Project>

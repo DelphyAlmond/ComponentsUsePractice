@@ -6,7 +6,7 @@ namespace ReportsControl;
 
 public class ReportDbConnection
 {
-    private string connectionString => "Host=127.0.0.1;Port=5472;Database=componentdb;Username=Del8a;Password=del8almond";
+    private static string connectionString => "Host=127.0.0.1;Port=5472;Database=componentdb;Username=Del8a;Password=del8almond";
 
     public List<Order> GetEmployeesByPosition(string position)
     {
@@ -33,7 +33,7 @@ public class ReportDbConnection
             var list = connection.Query<string>(query).ToList();
             return list;
         }
-        catch (Exception ex)
+        catch
         {
             MessageBox.Show("[ Error ] Ошибка чтения города");
             return null;

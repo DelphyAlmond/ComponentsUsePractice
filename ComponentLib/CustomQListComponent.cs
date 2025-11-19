@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 namespace ComponentLib;
 
@@ -16,6 +17,11 @@ public partial class CustomQListComponent : UserControl
     }
 
     public event EventHandler SelectionChanged;
+
+    public ListBox GetDataLB
+    {
+        get => dataListBox;
+    }
 
     // Устанавливает : новый шаблон будет применяться только к добавляемым элементам
     public void SetTemplateForDisplay(string template)
@@ -40,12 +46,15 @@ public partial class CustomQListComponent : UserControl
             List<string> values = rowSepWithValues.Split(";").ToList();
 
             // Сопоставляем, подсовывая на места после фраз шаблона:
-            string resultInfoLine = string.Empty;
+            string resultInfoLine = "";
             int v = 0;
             foreach (var key in _templateGenerator.PhraseMapping.Keys)
             {
-                resultInfoLine += key + " ";
-                resultInfoLine += values[v];
+                if (values.Count < _templateGenerator.PhraseMapping.Keys.Count
+                    && v <= _templateGenerator.PhraseMapping.Keys.Count - 2 ||
+                    values.Count == _templateGenerator.PhraseMapping.Keys.Count
+                    && v <= _templateGenerator.PhraseMapping.Keys.Count - 1)
+                    resultInfoLine += string.Concat(key, " ", values[v]);
                 v++;
             }
 
@@ -77,46 +86,50 @@ public partial class CustomQListComponent : UserControl
         T obj = Activator.CreateInstance<T>();
         Type type = typeof(T);
 
-        // Для значений параметров
-        List<string> values = [];
+        string remainingText = selectedFormattedString;
+        List<string> phrases = _templateGenerator.PhraseMapping.Keys.ToList();
+        List<string> values = _templateGenerator.PhraseMapping.Values.ToList();
 
-        int valueIndex = 0;
-        foreach (var pare in _templateGenerator.PhraseMapping)
+        for (int i = 0; i < values.Count - 1; i++)
         {
-            string textPhrase = pare.Key;
-            string fieldOrProperty = pare.Value;
+            string textPhrase = phrases[i];
+            string fieldOrPropertyName = values[i];
+            string nextTextPhrase = phrases[i + 1];
 
-            // Позиции строк информации (для вычленения значений)
-            int phrasePosition = selectedFormattedString.IndexOf(textPhrase);
+            // > Позиции строк информации (для вычленения значений):
 
-            // [ ! ] The value is everything from the start of remainingText up to the text phrase
-            string value = selectedFormattedString.Substring(0, phrasePosition).Trim(); // удаление фразы, её конец -> позиция значения
-            // Видоизм.\перезапись состояния строки, лидирующий эл.-т - value
-            selectedFormattedString = selectedFormattedString.Substring(phrasePosition + textPhrase.Length);
+            int phrasePosition = remainingText.IndexOf(textPhrase[textPhrase.Length - 1]);
+            // > [ ! ] The phrase txt is everything from the start of remainingText up to the value info
+            // = удаление фразы (её конец) -> (начало) переход автоматически на позицию значения
+            // > Видоизм.\перезапись состояния строки, лидирующий эл.-т на выходе от - value
+            remainingText = remainingText.Substring(phrasePosition, remainingText.Length);
 
-            // > поле\св.-во существует
-            if (!string.IsNullOrEmpty(fieldOrProperty) && !string.IsNullOrEmpty(value))
+            int nextPhrasePosition = remainingText.IndexOf(nextTextPhrase[0]);
+            string value = remainingText.Substring(0, nextPhrasePosition);
+
+            // ^^^ remainingText = remainingText.Substring(nextPhrasePosition + nextTextPhrase.Length);
+
+            // > поле\св.- во существует
+            if (!string.IsNullOrEmpty(fieldOrPropertyName) && !string.IsNullOrEmpty(value))
             {
-                SetPropertyOrField(obj, type, fieldOrProperty, value, valueIndex);
+                SetPropertyOrField(obj, type, fieldOrPropertyName, value);
             }
-
-            valueIndex++;
         }
 
         // Process any remaining text after the last phrase as the final value
-        if (!string.IsNullOrEmpty(selectedFormattedString.Trim()))
+        if (!string.IsNullOrEmpty(remainingText.Trim()))
         {
             var lastMapping = _templateGenerator.PhraseMapping.Last();
             if (!string.IsNullOrEmpty(lastMapping.Value))
             {
-                SetPropertyOrField(obj, type, lastMapping.Value, selectedFormattedString.Trim(), valueIndex);
+                SetPropertyOrField(obj, type, lastMapping.Value, remainingText.Trim());
             }
         }
 
         return obj;
     }
 
-    private void SetPropertyOrField<T>(T obj, Type type, string propertyName, string value, int valueIndex)
+    private void SetPropertyOrField<T>(T obj, Type type, string propertyName, string value)
     {
         PropertyInfo? property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
         FieldInfo? field = null;
@@ -133,7 +146,12 @@ public partial class CustomQListComponent : UserControl
 
             try
             {
-                if (targetType == typeof(string))
+                // > Handle GUID conversion specifically
+                if (targetType == typeof(Guid))
+                {
+                    convertedValue = Guid.Parse(value);
+                }
+                else if (targetType == typeof(string))
                 {
                     convertedValue = value;
                 }
@@ -142,6 +160,7 @@ public partial class CustomQListComponent : UserControl
                     convertedValue = Convert.ChangeType(value, targetType);
                 }
 
+                // > Set the value
                 if (property != null && property.CanWrite)
                 {
                     property.SetValue(obj, convertedValue);
@@ -153,12 +172,8 @@ public partial class CustomQListComponent : UserControl
             }
             catch (Exception ex)
             {
-                _toolTipManager.ShowWarning(dataListBox, $"[ ! ] Ошибка преобразования значения '{value}' для '{propertyName}': {ex.Message}");
+                // [ * ] Handle errors
             }
-        }
-        else
-        {
-            _toolTipManager.ShowWarning(dataListBox, $"[ * ] Не найдено свойство/поле '{propertyName}'. Значение '{value}' пропущено.");
         }
     }
 
