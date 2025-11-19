@@ -25,6 +25,10 @@ public partial class CustomPatternComponent : UserControl
     {
         InitializeComponent();
         inputTextBox.Enabled = false;
+        if (!string.IsNullOrEmpty(inputTextBox.Text))
+        {
+            Value = inputTextBox.Text;
+        }
         _toolTipManager = new CompToolTipManager();
 
         // > шаблон по умолчанию
@@ -53,6 +57,7 @@ public partial class CustomPatternComponent : UserControl
                 {
                     inputTextBox.Text = value;
                     _toolTipManager.Hide(inputTextBox);
+                    resultLabel.Text = "succeed";
                 }
                 else
                 {

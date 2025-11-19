@@ -41,7 +41,7 @@
             tabControls.Location = new Point(0, 40);
             tabControls.Name = "tabControls";
             tabControls.SelectedIndex = 0;
-            tabControls.Size = new Size(1423, 924);
+            tabControls.Size = new Size(1618, 924);
             tabControls.TabIndex = 0;
             tabControls.DoubleClick += TabControls_DoubleClick;
             // 
@@ -51,7 +51,7 @@
             menuStrip.Items.AddRange(new ToolStripItem[] { DirectoriesToolStripMenuItem, ReportsToolStripMenuItem });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
-            menuStrip.Size = new Size(1423, 40);
+            menuStrip.Size = new Size(1618, 40);
             menuStrip.TabIndex = 1;
             menuStrip.Text = "menu";
             // 
@@ -71,7 +71,7 @@
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1423, 964);
+            ClientSize = new Size(1618, 964);
             Controls.Add(tabControls);
             Controls.Add(menuStrip);
             MainMenuStrip = menuStrip;

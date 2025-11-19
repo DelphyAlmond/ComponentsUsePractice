@@ -40,7 +40,7 @@ public partial class EditAddForm : Form
         if (orderEntity.GetRDate() != null)
         {
             ReceiveDTP.Value = orderEntity.GetRDate().Value;
-            customPatternComponent.Value = orderEntity.GetSetReceiveDate;
+            customPatternComponent.Value = orderEntity.ReceiveDate;
         }
         else
         {
@@ -69,9 +69,9 @@ public partial class EditAddForm : Form
             orderEntity.Destination = customChoiceComponent.Text;
 
             customPatternComponent.Value = ReceiveDTP.Value.ToString("yyyy.MM.dd");
-            orderEntity.GetSetReceiveDate = customPatternComponent.Value;
+            orderEntity.SetDate(customPatternComponent.Value);
 
-            if (orderEntity.Id.Version == 0)
+            if (orderEntity.Id == Guid.Empty) // instead of .Version == 0
             {
                 DBconnection.AddOrder(orderEntity);
             }

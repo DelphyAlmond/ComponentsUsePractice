@@ -37,7 +37,7 @@
             // 
             addEditBtn.Location = new Point(17, 762);
             addEditBtn.Name = "addEditBtn";
-            addEditBtn.Size = new Size(812, 46);
+            addEditBtn.Size = new Size(342, 46);
             addEditBtn.TabIndex = 0;
             addEditBtn.Text = "Add\\Edit";
             addEditBtn.UseVisualStyleBackColor = true;
@@ -45,9 +45,9 @@
             // 
             // deleteBtn
             // 
-            deleteBtn.Location = new Point(867, 762);
+            deleteBtn.Location = new Point(365, 762);
             deleteBtn.Name = "deleteBtn";
-            deleteBtn.Size = new Size(549, 46);
+            deleteBtn.Size = new Size(240, 46);
             deleteBtn.TabIndex = 1;
             deleteBtn.Text = "Remove";
             deleteBtn.UseVisualStyleBackColor = true;
@@ -57,7 +57,7 @@
             // 
             listPanel.Location = new Point(3, 15);
             listPanel.Name = "listPanel";
-            listPanel.Size = new Size(1432, 735);
+            listPanel.Size = new Size(1622, 735);
             listPanel.TabIndex = 2;
             // 
             // OrderListComponent
@@ -69,7 +69,7 @@
             Controls.Add(deleteBtn);
             Controls.Add(addEditBtn);
             Name = "OrderListComponent";
-            Size = new Size(1435, 824);
+            Size = new Size(1628, 824);
             ResumeLayout(false);
         }
 

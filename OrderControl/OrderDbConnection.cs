@@ -101,6 +101,14 @@ public class OrderDbConnection
         {
             using var connection = new NpgsqlConnection(connectionString);
             string query = "SELECT * FROM orders";
+
+            // DEBUG: Check what the database actually returns
+            var rawResults = connection.Query<dynamic>(query).ToList();
+            foreach (var row in rawResults.Take(3)) // > first 3 rows
+            {
+                Console.WriteLine($"Row: id={row.id}, receivedate={row.receivedate} (Type: {row.receivedate?.GetType()})");
+            }
+
             var list = connection.Query<Order>(query).ToList();
             return list;
         }

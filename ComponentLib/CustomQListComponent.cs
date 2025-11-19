@@ -92,27 +92,37 @@ public partial class CustomQListComponent : UserControl
 
         for (int i = 0; i < values.Count - 1; i++)
         {
-            string textPhrase = phrases[i];
-            string fieldOrPropertyName = values[i];
-            string nextTextPhrase = phrases[i + 1];
-
-            // > Позиции строк информации (для вычленения значений):
-
-            int phrasePosition = remainingText.IndexOf(textPhrase[textPhrase.Length - 1]);
-            // > [ ! ] The phrase txt is everything from the start of remainingText up to the value info
-            // = удаление фразы (её конец) -> (начало) переход автоматически на позицию значения
-            // > Видоизм.\перезапись состояния строки, лидирующий эл.-т на выходе от - value
-            remainingText = remainingText.Substring(phrasePosition, remainingText.Length);
-
-            int nextPhrasePosition = remainingText.IndexOf(nextTextPhrase[0]);
-            string value = remainingText.Substring(0, nextPhrasePosition);
-
-            // ^^^ remainingText = remainingText.Substring(nextPhrasePosition + nextTextPhrase.Length);
-
-            // > поле\св.- во существует
-            if (!string.IsNullOrEmpty(fieldOrPropertyName) && !string.IsNullOrEmpty(value))
+            string textPhrase = phrases[i].Trim();
+            string fieldOrPropertyName = values[i].Trim();
+            if (i + 1 < phrases.Count - 1)
             {
-                SetPropertyOrField(obj, type, fieldOrPropertyName, value);
+                string nextTextPhrase = phrases[i + 1].Trim();
+
+                // > Позиции строк информации (для вычленения значений):
+
+                int phrasePosition = remainingText.IndexOf(textPhrase[textPhrase.Length - 1]);
+                // > [ ! ] The phrase txt is everything from the start of remainingText up to the value info
+                // = удаление фразы (её конец) -> (начало) переход автоматически на позицию значения
+                // > Видоизм.\перезапись состояния строки, лидирующий эл.-т на выходе от - value
+                remainingText = remainingText.Substring(phrasePosition + 1).Trim();
+
+                int nextPhrasePosition = remainingText.IndexOf(nextTextPhrase[0]);
+
+                string value = remainingText.Substring(0, nextPhrasePosition).Trim();
+
+                // ^^^ [ X ] remainingText = remainingText.Substring(nextPhrasePosition + nextTextPhrase.Length);
+
+                // > поле\св.- во существует
+                if (!string.IsNullOrEmpty(fieldOrPropertyName) && !string.IsNullOrEmpty(value))
+                {
+                    SetPropertyOrField(obj, type, fieldOrPropertyName, value);
+                }
+            }
+            else
+            {
+                int phrasePosition = remainingText.IndexOf(textPhrase[textPhrase.Length - 1]);
+                remainingText = remainingText.Substring(phrasePosition + 1).Trim();
+                SetPropertyOrField(obj, type, fieldOrPropertyName, remainingText);
             }
         }
 

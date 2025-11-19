@@ -53,23 +53,10 @@ namespace OrderControl
             if (customListC.GetDataLB.SelectedIndex != -1)
             {
                 var order = customListC.GetItemFromSelected<Order>();
-
                 var dbOrder = OrderDbConnection.GetOrder(order.Id);
 
-                // DEBUG: Check what GUID we have
-                if (dbOrder == null)
-                {
-                    MessageBox.Show($"> Order with ID {order.Id} not found in database!");
+                order.MovementNotes = dbOrder.MovementNotes;
 
-                    // CHECK : Show what orders actually exist in DB
-                    var allOrders = new OrderDbConnection().GetOrders();
-                    if (allOrders != null)
-                    {
-                        string existingIds = string.Join("\n", allOrders.Select(o => o.Id));
-                        MessageBox.Show($"> Existing orders in DB:\n{existingIds}");
-                    }
-                    return;
-                }
                 addEditForm = new EditAddForm(order);
             }
             else

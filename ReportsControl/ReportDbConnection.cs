@@ -8,13 +8,13 @@ public class ReportDbConnection
 {
     private static string connectionString => "Host=127.0.0.1;Port=5472;Database=componentdb;Username=Del8a;Password=del8almond";
 
-    public List<Order> GetEmployeesByPosition(string position)
+    public List<Order> GetOrdersByDestination(string city)
     {
         try
         {
             using var connection = new NpgsqlConnection(connectionString);
             string query = "SELECT * FROM orders WHERE destination=@Destination";
-            var list = connection.Query<Order>(query, new { Position = position }).ToList();
+            var list = connection.Query<Order>(query, new { Destination = city }).ToList();
             return list;
         }
         catch (Exception ex)

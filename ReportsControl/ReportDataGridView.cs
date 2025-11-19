@@ -43,7 +43,7 @@ public partial class ReportDataGridView : UserControl
             MessageBox.Show("[ ! ] Не выбран город");
         }
 
-        var customers = cDbConnection.GetEmployeesByPosition(selectedStatus!);
+        var customers = cDbConnection.GetOrdersByDestination(selectedStatus!);
         dataGridView.DataSource = customers;
 
         ConfigureDataGridView();

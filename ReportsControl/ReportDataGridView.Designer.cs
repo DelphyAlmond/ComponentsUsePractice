@@ -41,27 +41,28 @@
             dataGridView.Location = new Point(18, 77);
             dataGridView.Name = "dataGridView";
             dataGridView.RowHeadersWidth = 82;
-            dataGridView.Size = new Size(820, 383);
+            dataGridView.Size = new Size(1426, 485);
             dataGridView.TabIndex = 0;
             // 
             // genBtn
             // 
-            genBtn.Location = new Point(404, 19);
+            genBtn.Location = new Point(487, 19);
             genBtn.Name = "genBtn";
             genBtn.Size = new Size(434, 46);
             genBtn.TabIndex = 1;
             genBtn.Text = "Make report";
             genBtn.UseVisualStyleBackColor = true;
+            genBtn.Click += buttonGenerate_Click;
             // 
             // cityFilterCB
             // 
             cityFilterCB.FormattingEnabled = true;
             cityFilterCB.Location = new Point(18, 23);
             cityFilterCB.Name = "cityFilterCB";
-            cityFilterCB.Size = new Size(380, 40);
+            cityFilterCB.Size = new Size(463, 40);
             cityFilterCB.TabIndex = 2;
             // 
-            // UserControl1
+            // ReportDataGridView
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -69,8 +70,8 @@
             Controls.Add(cityFilterCB);
             Controls.Add(genBtn);
             Controls.Add(dataGridView);
-            Name = "UserControl1";
-            Size = new Size(859, 483);
+            Name = "ReportDataGridView";
+            Size = new Size(1463, 581);
             ((System.ComponentModel.ISupportInitialize)dataGridView).EndInit();
             ResumeLayout(false);
         }

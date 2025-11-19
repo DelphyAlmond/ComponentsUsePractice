@@ -21,20 +21,20 @@ public class Order
     public string Destination { get; set; }
 
     // Дата получения заказа (* 1-3 дня от текущей даты, но хранится конкретная дата)
+    // ✅ FIX: Use backing field to avoid recursion
+
     [Column("receivedate")]
-    private string ReceiveDate;
-    public string GetSetReceiveDate
+    public string ReceiveDate { get; set; }
+
+    public void SetDate(string value)
     {
-        get => ReceiveDate;
-        set
+        if (!string.IsNullOrEmpty(value))
         {
-            if (!string.IsNullOrEmpty(value))
-            {
-                ValidateReceiveDate(value);
-            }
-            ReceiveDate = value;
+            ValidateReceiveDate(value);
         }
+        ReceiveDate = value;
     }
+
 
     // Validate date is within 1-3 days from current date
     private static void ValidateReceiveDate(string dateString)
@@ -59,7 +59,7 @@ public class Order
 
     public string ValueString
     {
-        get => string.Join(";", new List<string> { Id.ToString() ?? " ", Destination ?? " ", FIO ?? " ", GetSetReceiveDate ?? " ", MovementNotes ?? " " });
+        get => string.Join(";", new List<string> { Id.ToString() ?? " ", Destination ?? " ", FIO ?? " ", ReceiveDate ?? " ", MovementNotes ?? " " });
     }
 
     public Order(Guid id, string orderer, string notes, string city, string arrivingDate)
@@ -68,7 +68,7 @@ public class Order
         FIO = orderer;
         MovementNotes = notes;
         Destination = city;
-        GetSetReceiveDate = arrivingDate;
+        ReceiveDate = arrivingDate;
     }
 
     public Order()
@@ -76,18 +76,18 @@ public class Order
         Id = Guid.NewGuid();
     }
 
-    public bool HasRDate() => GetSetReceiveDate != null;
+    public bool HasRDate() => ReceiveDate != null;
     // \ !string.IsNullOrEmpty(...)
 
     public DateTime? GetRDate()
     {
-        if (HasRDate()) return DateTime.Parse(GetSetReceiveDate);
+        if (HasRDate()) return DateTime.Parse(ReceiveDate);
         return null;
     }
 
     public void SetRDate(DateTime? date)
     {
-        GetSetReceiveDate = date?.ToString("YYYY.MM.DD") ?? string.Empty;
+        ReceiveDate = date?.ToString("YYYY.MM.DD") ?? string.Empty;
     }
 }
 
