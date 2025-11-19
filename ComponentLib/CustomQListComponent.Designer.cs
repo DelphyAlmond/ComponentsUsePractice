@@ -1,6 +1,6 @@
 ﻿namespace ComponentLib;
 
-partial class CustomPatternComponent
+partial class CustomQListComponent
 {
     /// <summary> 
     /// Обязательная переменная конструктора.
@@ -28,41 +28,30 @@ partial class CustomPatternComponent
     /// </summary>
     private void InitializeComponent()
     {
-        inputTextBox = new TextBox();
-        resultLabel = new Label();
+        dataListBox = new ListBox();
         SuspendLayout();
         // 
-        // inputTextBox
+        // dataListBox
         // 
-        inputTextBox.Location = new Point(16, 13);
-        inputTextBox.Name = "inputTextBox";
-        inputTextBox.Size = new Size(447, 39);
-        inputTextBox.TabIndex = 2;
-        inputTextBox.TextChanged += InputTextBox_TextChanged;
+        dataListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        dataListBox.FormattingEnabled = true;
+        dataListBox.Location = new Point(12, 12);
+        dataListBox.Name = "dataListBox";
+        dataListBox.Size = new Size(953, 580);
+        dataListBox.TabIndex = 0;
         // 
-        // resultLabel
-        // 
-        resultLabel.AutoSize = true;
-        resultLabel.Location = new Point(16, 67);
-        resultLabel.Name = "resultLabel";
-        resultLabel.Size = new Size(234, 32);
-        resultLabel.TabIndex = 4;
-        resultLabel.Text = "status template-pass";
-        // 
-        // CustomPatternComponent
+        // CustomQListComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.Cornsilk;
-        Controls.Add(resultLabel);
-        Controls.Add(inputTextBox);
-        Name = "CustomPatternComponent";
-        Size = new Size(475, 125);
+        Controls.Add(dataListBox);
+        Name = "CustomQListComponent";
+        Size = new Size(980, 628);
         ResumeLayout(false);
-        PerformLayout();
     }
 
     #endregion
-    private TextBox inputTextBox;
-    private Label resultLabel;
+
+    private ListBox dataListBox;
 }

@@ -1,6 +1,6 @@
 ﻿namespace ComponentLib;
 
-partial class CustomQListComponent
+partial class CustomPatternComponent
 {
     /// <summary> 
     /// Обязательная переменная конструктора.
@@ -28,30 +28,41 @@ partial class CustomQListComponent
     /// </summary>
     private void InitializeComponent()
     {
-        dataListBox = new ListBox();
+        inputTextBox = new TextBox();
+        resultLabel = new Label();
         SuspendLayout();
         // 
-        // dataListBox
+        // inputTextBox
         // 
-        dataListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-        dataListBox.FormattingEnabled = true;
-        dataListBox.Location = new Point(12, 12);
-        dataListBox.Name = "dataListBox";
-        dataListBox.Size = new Size(586, 516);
-        dataListBox.TabIndex = 0;
+        inputTextBox.Location = new Point(16, 13);
+        inputTextBox.Name = "inputTextBox";
+        inputTextBox.Size = new Size(447, 39);
+        inputTextBox.TabIndex = 2;
+        inputTextBox.TextChanged += InputTextBox_TextChanged;
         // 
-        // CustomQListComponent
+        // resultLabel
+        // 
+        resultLabel.AutoSize = true;
+        resultLabel.Location = new Point(16, 67);
+        resultLabel.Name = "resultLabel";
+        resultLabel.Size = new Size(234, 32);
+        resultLabel.TabIndex = 4;
+        resultLabel.Text = "status template-pass";
+        // 
+        // CustomPatternComponent
         // 
         AutoScaleDimensions = new SizeF(13F, 32F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.Cornsilk;
-        Controls.Add(dataListBox);
-        Name = "CustomQListComponent";
-        Size = new Size(613, 541);
+        Controls.Add(resultLabel);
+        Controls.Add(inputTextBox);
+        Name = "CustomPatternComponent";
+        Size = new Size(475, 125);
         ResumeLayout(false);
+        PerformLayout();
     }
 
     #endregion
-
-    private ListBox dataListBox;
+    private TextBox inputTextBox;
+    private Label resultLabel;
 }

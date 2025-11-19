@@ -1,0 +1,42 @@
+﻿using Dapper;
+using Npgsql;
+using OrderControl;
+
+namespace ReportsControl;
+
+public class ReportDbConnection
+{
+    private static string connectionString => "Host=127.0.0.1;Port=5472;Database=componentdb;Username=Del8a;Password=del8almond";
+
+    public List<Order> GetOrdersByDestination(string city)
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(connectionString);
+            string query = "SELECT * FROM orders WHERE destination=@Destination";
+            var list = connection.Query<Order>(query, new { Destination = city }).ToList();
+            return list;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"[ Error ] Ошибка извлечения заказов: {ex.Message}");
+            return null;
+        }
+    }
+
+    public List<string> GetDestination()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(connectionString);
+            var query = "SELECT name FROM cities";
+            var list = connection.Query<string>(query).ToList();
+            return list;
+        }
+        catch
+        {
+            MessageBox.Show("[ Error ] Ошибка чтения города");
+            return null;
+        }
+    }
+}
