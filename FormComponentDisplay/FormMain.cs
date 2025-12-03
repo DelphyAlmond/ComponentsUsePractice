@@ -53,6 +53,15 @@ public partial class FormMain : Form
                 };
                 ReportsToolStripMenuItem.DropDownItems.Add(menu);
             }
+
+            // *
+            var extensionsMenu = new ToolStripMenuItem { Text = "Extensions" };
+            extensionsMenu.Click += (sender, e) =>
+            {
+                var pluginsForm = new ReportPluginsForm();
+                pluginsForm.ShowDialog();
+            };
+            ReportsToolStripMenuItem.DropDownItems.Add(extensionsMenu);
         }
         catch (Exception ex)
         {

@@ -9,11 +9,19 @@
 
   <ItemGroup>
 	<PackageReference Include="Dapper" Version="2.1.66" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
 	<PackageReference Include="Npgsql" Version="9.0.3" />
   </ItemGroup>
 	
   <ItemGroup>
     <ProjectReference Include="..\ContractLib\ContractLib.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
