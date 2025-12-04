@@ -7,13 +7,12 @@ namespace FormComponentDisplay;
 public partial class ReportPluginsForm : Form
 {
     private List<IReportDocumentC> _loadedPlugins = new List<IReportDocumentC>();
-
     private OrderDbConnection _centralDb;
 
     public ReportPluginsForm()
     {
         InitializeComponent();
-        _centralDb = new OrderDbConnection(); // < initialize
+        _centralDb = new OrderDbConnection();
 
         LoadReportPlugins();
         InitializePluginUI();
@@ -45,28 +44,19 @@ public partial class ReportPluginsForm : Form
 
     private void LoadPluginsFromAssembly(Assembly assembly)
     {
-        var reportInterfaceTypes = new Type[]
-        {
-            typeof(IRDocWithContextTablesC),
-            typeof(IRDocWithChartLineC),
-            typeof(IRDocWithTableColumnRowHeaderC)
-        };
-
         foreach (var type in assembly.GetTypes())
         {
-            foreach (var interfaceType in reportInterfaceTypes)
+            if (typeof(IReportDocumentC).IsAssignableFrom(type) &&
+                !type.IsInterface && !type.IsAbstract)
             {
-                if (interfaceType.IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+                try
                 {
-                    try
-                    {
-                        var plugin = (IReportDocumentC)Activator.CreateInstance(type);
-                        _loadedPlugins.Add(plugin);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error creating plugin {type.Name}: {ex.Message}");
-                    }
+                    var plugin = (IReportDocumentC)Activator.CreateInstance(type);
+                    _loadedPlugins.Add(plugin);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating plugin {type.Name}: {ex.Message}");
                 }
             }
         }
@@ -74,43 +64,53 @@ public partial class ReportPluginsForm : Form
 
     private void InitializePluginUI()
     {
-        var mainPanel = (FlowLayoutPanel)this.Controls[0];
+        mainFlowLayoutPanel.Controls.Clear();
 
-        // Group plugins by type
-        var tablePlugins = _loadedPlugins.OfType<IRDocWithContextTablesC>().ToList();
-        var chartPlugins = _loadedPlugins.OfType<IRDocWithChartLineC>().ToList();
-        var complexTablePlugins = _loadedPlugins.OfType<IRDocWithTableColumnRowHeaderC>().ToList();
+        var groupedPlugins = _loadedPlugins
+            .GroupBy(p => GetPluginType(p))
+            .Where(g => g.Any());
 
-        // Create UI blocks for each plugin type
-        if (tablePlugins.Any())
-            AddPluginBlock(mainPanel, "> Таблицы PDF", tablePlugins.Cast<IReportDocumentC>().ToList(),
-                (plugin) => GenerateTableReport((IRDocWithContextTablesC)plugin));
-
-        if (chartPlugins.Any())
-            AddPluginBlock(mainPanel, "> Линейные диаграммы Word", chartPlugins.Cast<IReportDocumentC>().ToList(),
-                (plugin) => GenerateChartReport((IRDocWithChartLineC)plugin));
-
-        if (complexTablePlugins.Any())
-            AddPluginBlock(mainPanel, "> Таблицы Excel", complexTablePlugins.Cast<IReportDocumentC>().ToList(),
-                (plugin) => GenerateComplexTableReport((IRDocWithTableColumnRowHeaderC)plugin));
+        foreach (var group in groupedPlugins)
+        {
+            AddPluginBlock(mainFlowLayoutPanel, group.Key, group.ToList());
+        }
     }
 
-    private void AddPluginBlock(FlowLayoutPanel parent, string title, List<IReportDocumentC> plugins, Action<IReportDocumentC> generateAction)
+    private string GetPluginType(IReportDocumentC plugin)
     {
+        if (plugin is IRDocWithContextTablesC) return "Таблицы PDF";
+        if (plugin is IRDocWithChartLineC) return "Линейные диаграммы Word";
+        if (plugin is IRDocWithTableColumnRowHeaderC) return "Таблицы Excel";
+        return "Другие плагины";
+    }
+
+    private void AddPluginBlock(FlowLayoutPanel parent, string title, List<IReportDocumentC> plugins)
+    {
+        // Clone template controls
         var groupBox = new GroupBox
         {
-            Text = title,
-            Size = new Size(550, 100),
-            Margin = new Padding(10)
+            Text = $"> {title}",
+            Size = groupBoxTemplate.Size,
+            Margin = new Padding(10),
+            Tag = plugins
         };
 
         var formatCombo = new ComboBox
         {
-            Location = new Point(20, 30),
-            Size = new Size(200, 25),
-            DropDownStyle = ComboBoxStyle.DropDownList
+            Location = comboBoxTemplate.Location,
+            Size = comboBoxTemplate.Size,
+            DropDownStyle = comboBoxTemplate.DropDownStyle
         };
 
+        var generateButton = new Button
+        {
+            Location = generateButtonTemplate.Location,
+            Size = generateButtonTemplate.Size,
+            Text = generateButtonTemplate.Text,
+            Font = generateButtonTemplate.Font
+        };
+
+        // Populate combo box
         foreach (var plugin in plugins)
         {
             formatCombo.Items.Add(new PluginComboItem
@@ -123,18 +123,12 @@ public partial class ReportPluginsForm : Form
         if (formatCombo.Items.Count > 0)
             formatCombo.SelectedIndex = 0;
 
-        var generateButton = new Button
-        {
-            Text = "Сгенерировать отчет",
-            Location = new Point(250, 30),
-            Size = new Size(150, 25)
-        };
-
+        // Wire up event
         generateButton.Click += (sender, e) =>
         {
             if (formatCombo.SelectedItem is PluginComboItem selectedItem)
             {
-                generateAction(selectedItem.Plugin);
+                GenerateReport(selectedItem.Plugin);
             }
         };
 
@@ -143,32 +137,86 @@ public partial class ReportPluginsForm : Form
         parent.Controls.Add(groupBox);
     }
 
-    private void GenerateTableReport(IRDocWithContextTablesC plugin)
+    private void GenerateReport(IReportDocumentC plugin)
     {
         using (var saveDialog = new SaveFileDialog())
         {
             saveDialog.Filter = $"{plugin.DocumentFormat.ToUpper()} files|*.{plugin.DocumentFormat}";
-            saveDialog.FileName = $"Отчет_по_движению_заказов.{plugin.DocumentFormat}";
+            saveDialog.FileName = $"Отчет.{plugin.DocumentFormat}";
 
             if (saveDialog.ShowDialog() == DialogResult.OK)
             {
-                // Prepare data: movement marks (1-6) without customer names
-                var movementData = PrepareMovementTableData();
+                loadingLabel.Visible = true;
+                loadingLabel.Text = "Генерация отчета...";
 
                 Task.Run(async () =>
                 {
-                    await plugin.CreateDocumentAsync(
-                        saveDialog.FileName,
-                        "Отчет по продвижению заказов",
-                        movementData
-                    );
-
-                    this.Invoke(new Action(() =>
+                    try
                     {
-                        MessageBox.Show($"Отчет успешно создан: {saveDialog.FileName}");
-                    }));
+                        object data = GetReportData(plugin);
+                        await ExecutePluginReport(plugin, saveDialog.FileName, data);
+
+                        this.Invoke(new Action(() =>
+                        {
+                            loadingLabel.Visible = false;
+                            MessageBox.Show($"Отчет успешно создан: {saveDialog.FileName}");
+                        }));
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            loadingLabel.Visible = false;
+                            MessageBox.Show($"Ошибка создания отчета: {ex.Message}");
+                        }));
+                    }
                 });
             }
+        }
+    }
+
+    private async Task ExecutePluginReport(IReportDocumentC plugin, string fileName, object data)
+    {
+        if (plugin is IRDocWithContextTablesC tablePlugin)
+        {
+            await tablePlugin.CreateDocumentAsync(
+                fileName,
+                "Отчет по продвижению заказов",
+                (List<string[,]>)data
+            );
+        }
+        else if (plugin is IRDocWithChartLineC chartPlugin)
+        {
+            await chartPlugin.CreateDocumentAsync(
+                fileName,
+                "Отчет по заказам по городам и датам",
+                "Динамика поступления заказов по городам",
+                (Dictionary<string, List<(int Parameter, double Value)>>)data
+            );
+        }
+        else if (plugin is IRDocWithTableColumnRowHeaderC excelPlugin)
+        {
+            var reportData = (List<OrderReportDto>)data;
+            var headers = new List<(string Header, string PropertyName, string FieldName)>
+            {
+                ("Идентификатор", "Id", "Id"),
+                ("ФИО заказчика", "CustomerName", "CustomerName"),
+                ("Город назначения", "City", "City"),
+                ("Дата получения", "ReceiveDate", "ReceiveDate")
+            };
+
+            var columnsWidth = new List<int> { 40, 30, 20, 15 };
+            var rowsHeights = Enumerable.Repeat(20, reportData.Count + 2).ToList();
+
+            await excelPlugin.CreateDocumentAsync(
+                fileName,
+                "Полный отчет по всем заказам",
+                columnsWidth,
+                rowsHeights,
+                true,
+                headers,
+                reportData
+            );
         }
     }
 
@@ -231,36 +279,6 @@ public partial class ReportPluginsForm : Form
         return tables;
     }
 
-    private void GenerateChartReport(IRDocWithChartLineC plugin)
-    {
-        using (var saveDialog = new SaveFileDialog())
-        {
-            saveDialog.Filter = $"{plugin.DocumentFormat.ToUpper()} files|*.{plugin.DocumentFormat}";
-            saveDialog.FileName = $"Отчет_по_городам_и_датам.{plugin.DocumentFormat}";
-
-            if (saveDialog.ShowDialog() == DialogResult.OK)
-            {
-                // Prepare data for line chart: city -> [(day, count), ...]
-                var chartData = PrepareChartData();
-
-                Task.Run(async () =>
-                {
-                    await plugin.CreateDocumentAsync(
-                        saveDialog.FileName,
-                        "Отчет по заказам по городам и датам",
-                        "Динамика поступления заказов по городам",
-                        chartData
-                    );
-
-                    this.Invoke(new Action(() =>
-                    {
-                        MessageBox.Show($"Отчет успешно создан: {saveDialog.FileName}");
-                    }));
-                });
-            }
-        }
-    }
-
     private Dictionary<string, List<(int Parameter, double Value)>> PrepareChartData()
     {
         var chartData = new Dictionary<string, List<(int, double)>>();
@@ -292,58 +310,6 @@ public partial class ReportPluginsForm : Form
         }
 
         return chartData;
-    }
-
-    private void GenerateComplexTableReport(IRDocWithTableColumnRowHeaderC plugin)
-    {
-        using (var saveDialog = new SaveFileDialog())
-        {
-            saveDialog.Filter = $"{plugin.DocumentFormat.ToUpper()} files|*.{plugin.DocumentFormat}";
-            saveDialog.FileName = $"Полный_отчет_по_заказам.{plugin.DocumentFormat}";
-
-            if (saveDialog.ShowDialog() == DialogResult.OK)
-            {
-                // Prepare data for Excel report with complex headers
-                var reportData = PrepareExcelReportData();
-
-                Task.Run(async () =>
-                {
-                    // Define headers with PropertyName mapping
-                    var headers = new List<(string Header, string PropertyName, string FieldName)>
-                        {
-                            ("Идентификатор", "Id", "Id"),
-                            ("ФИО заказчика", "CustomerName", "CustomerName"),
-                            ("Город назначения", "City", "City"),
-                            ("Дата получения", "ReceiveDate", "ReceiveDate")
-                        };
-
-                    // Define column widths (in characters)
-                    var columnsWidth = new List<int> { 40, 30, 20, 15 };
-
-                    // Define row heights (in points)
-                    var rowsHeights = new List<int>();
-                    for (int i = 0; i < reportData.Count + 2; i++) // +2 for header rows
-                    {
-                        rowsHeights.Add(20);
-                    }
-
-                    await plugin.CreateDocumentAsync(
-                        saveDialog.FileName,
-                        "Полный отчет по всем заказам",
-                        columnsWidth,
-                        rowsHeights,
-                        true, // isHeaderFirstRow
-                        headers,
-                        reportData
-                    );
-
-                    this.Invoke(new Action(() =>
-                    {
-                        MessageBox.Show($"Отчет успешно создан: {saveDialog.FileName}");
-                    }));
-                });
-            }
-        }
     }
 
     private List<OrderReportDto> PrepareExcelReportData()
@@ -387,12 +353,29 @@ public partial class ReportPluginsForm : Form
 
         return reportData;
     }
-    
+
+    private object GetReportData(IReportDocumentC plugin)
+    {
+        if (plugin is IRDocWithContextTablesC)
+        {
+            return PrepareMovementTableData();
+        }
+        else if (plugin is IRDocWithChartLineC)
+        {
+            return PrepareChartData();
+        }
+        else if (plugin is IRDocWithTableColumnRowHeaderC)
+        {
+            return PrepareExcelReportData();
+        }
+
+        return null;
+    }
+
     private class PluginComboItem
     {
         public string Text { get; set; }
         public IReportDocumentC Plugin { get; set; }
-
         public override string ToString() => Text;
     }
 }
