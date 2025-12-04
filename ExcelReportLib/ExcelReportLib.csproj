@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EPPlus" Version="8.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContractLib\ContractLib.csproj" />
+  </ItemGroup>
+
+	<Target Name="CopyToRPlugins" AfterTargets="Build">
+		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+			  DestinationFiles="$(SolutionDir)FormComponentDisplay\bin\Debug\net9.0-windows\RPlugins\$(AssemblyName).dll" />
+	</Target>
+
+</Project>

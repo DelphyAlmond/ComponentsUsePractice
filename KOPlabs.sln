@@ -4,9 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormComponentDisplay", "FormComponentDisplay\FormComponentDisplay.csproj", "{FF4ACEBE-3A79-4E98-8F88-E884D01AC81D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{57BA594C-6975-4740-9DF6-360294CB3625} = {57BA594C-6975-4740-9DF6-360294CB3625}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContractLib", "ContractLib\ContractLib.csproj", "{2065FB31-C852-485D-B8DE-4E9E3DC3CC29}"
 EndProject
@@ -22,9 +19,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CPlugins", "CPlugins", "{36
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RPlugins", "RPlugins", "{B5637DD8-8446-4939-8C26-8D3FFFE4FFEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportsLib", "ReportsLib\ReportsLib.csproj", "{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfReportLib", "ReportsLib\PdfReportLib.csproj", "{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportContracts", "ReportContracts\ReportContracts.csproj", "{D21E9AFC-349C-4CA8-85A0-BDB06F008744}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelReportLib", "ExcelReportLib\ExcelReportLib.csproj", "{A948C275-DA97-45E8-A452-54EA333EEDED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordDocReportLib", "PdfReportLib\WordDocReportLib.csproj", "{FA355201-E600-468A-8A5A-0A19C265E55D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,10 +59,14 @@ Global
 		{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D21E9AFC-349C-4CA8-85A0-BDB06F008744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D21E9AFC-349C-4CA8-85A0-BDB06F008744}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D21E9AFC-349C-4CA8-85A0-BDB06F008744}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D21E9AFC-349C-4CA8-85A0-BDB06F008744}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A948C275-DA97-45E8-A452-54EA333EEDED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A948C275-DA97-45E8-A452-54EA333EEDED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A948C275-DA97-45E8-A452-54EA333EEDED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A948C275-DA97-45E8-A452-54EA333EEDED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA355201-E600-468A-8A5A-0A19C265E55D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA355201-E600-468A-8A5A-0A19C265E55D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA355201-E600-468A-8A5A-0A19C265E55D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA355201-E600-468A-8A5A-0A19C265E55D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,7 +76,8 @@ Global
 		{5E3847AC-1674-44F0-BD0B-3BD1219D653A} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 		{1F9EB9C0-E285-49BF-9DA9-A8A6AB6612F3} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 		{6AEF2515-3BE5-49C6-BAFF-AE66ABCADD3C} = {B5637DD8-8446-4939-8C26-8D3FFFE4FFEE}
-		{D21E9AFC-349C-4CA8-85A0-BDB06F008744} = {B5637DD8-8446-4939-8C26-8D3FFFE4FFEE}
+		{A948C275-DA97-45E8-A452-54EA333EEDED} = {B5637DD8-8446-4939-8C26-8D3FFFE4FFEE}
+		{FA355201-E600-468A-8A5A-0A19C265E55D} = {B5637DD8-8446-4939-8C26-8D3FFFE4FFEE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {325A54AF-D883-496B-A5ED-3DBE71262848}

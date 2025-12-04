@@ -1,6 +1,7 @@
 ﻿using OrderControl;
-using ReportContracts;
 using System.Reflection;
+
+using ContractLib;
 
 namespace FormComponentDisplay;
 
@@ -12,7 +13,17 @@ public partial class ReportPluginsForm : Form
     public ReportPluginsForm()
     {
         InitializeComponent();
-        _centralDb = new OrderDbConnection();
+
+        try
+        {
+            _centralDb = new OrderDbConnection();
+            // Проверяем подключение
+            var test = _centralDb.GetOrders()?.Count ?? 0;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка подключения к БД: {ex.Message}\nБудут использованы тестовые данные.");
+        }
 
         LoadReportPlugins();
         InitializePluginUI();
@@ -20,15 +31,13 @@ public partial class ReportPluginsForm : Form
 
     private void LoadReportPlugins()
     {
-        var pluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RPlugins");
+        // Загружаем из папки сборки самого плагина
+        var pluginsPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         if (!Directory.Exists(pluginsPath))
-        {
-            Directory.CreateDirectory(pluginsPath);
             return;
-        }
 
-        foreach (var dllFile in Directory.GetFiles(pluginsPath, "*.dll"))
+        foreach (var dllFile in Directory.GetFiles(pluginsPath, "*Plugin*.dll"))
         {
             try
             {
@@ -38,6 +47,34 @@ public partial class ReportPluginsForm : Form
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки плагина {dllFile}: {ex.Message}");
+            }
+        }
+    }
+
+    private void LoadCommonDependencies()
+    {
+        var dependencies = new[]
+        {
+        "DocumentFormat.OpenXml",
+        "EPPlus",
+        "itext7"
+    };
+
+        var pluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RPlugins");
+
+        foreach (var dep in dependencies)
+        {
+            var dllPath = Path.Combine(pluginsPath, $"{dep}.dll");
+            if (File.Exists(dllPath))
+            {
+                try
+                {
+                    Assembly.LoadFrom(dllPath);
+                }
+                catch
+                {
+                    // Игнорируем ошибки загрузки зависимостей
+                }
             }
         }
     }
@@ -230,30 +267,39 @@ public partial class ReportPluginsForm : Form
 
             if (orders != null && orders.Any())
             {
-                // Group by movement status
+                // Группируем по MovementNotes - исправляем фильтрацию
                 var statusGroups = orders
-                    .Where(o => !string.IsNullOrEmpty(o.MovementNotes))
-                    .GroupBy(o => o.MovementNotes)
+                    .GroupBy(o => o.MovementNotes ?? "Без статуса") // Добавляем обработку null
+                    .Where(g => !string.IsNullOrEmpty(g.Key)) // Исключаем пустые
                     .ToList();
 
-                // Create table data
+                // Создаем таблицу: +1 для заголовка
                 string[,] movementTable = new string[statusGroups.Count + 1, 3];
 
-                // Header row
+                // Заголовок
                 movementTable[0, 0] = "Статус движения";
                 movementTable[0, 1] = "Количество";
                 movementTable[0, 2] = "Процент (%)";
 
                 int totalOrders = orders.Count;
 
-                // Data rows
+                // Заполняем данные
                 for (int i = 0; i < statusGroups.Count; i++)
                 {
                     var group = statusGroups[i];
                     movementTable[i + 1, 0] = group.Key;
                     movementTable[i + 1, 1] = group.Count().ToString();
-                    double percentage = (group.Count() * 100.0) / totalOrders;
-                    movementTable[i + 1, 2] = percentage.ToString("0.00") + "%";
+
+                    // Исправляем расчет процента
+                    if (totalOrders > 0)
+                    {
+                        double percentage = (group.Count() * 100.0) / totalOrders;
+                        movementTable[i + 1, 2] = percentage.ToString("F2") + "%";
+                    }
+                    else
+                    {
+                        movementTable[i + 1, 2] = "0.00%";
+                    }
                 }
 
                 tables.Add(movementTable);
@@ -261,18 +307,17 @@ public partial class ReportPluginsForm : Form
         }
         catch (Exception ex)
         {
-            // Fallback to example data if database connection fails
+            // Fallback данные - исправляем структуру
             string[,] movementTable = new string[7, 3]
             {
-                    { "Статус", "Количество", "Процент" },
-                    { "Создан", "10", "20%" },
-                    { "Обработан", "15", "30%" },
-                    { "В пути", "8", "16%" },
-                    { "Доставлен", "12", "24%" },
-                    { "Получен", "3", "6%" },
-                    { "Завершен", "2", "4%" }
+            { "Статус движения", "Количество", "Процент (%)" },
+            { "Создан", "10", "20.00%" },
+            { "Обработан", "15", "30.00%" },
+            { "В пути", "8", "16.00%" },
+            { "Доставлен", "12", "24.00%" },
+            { "Получен", "3", "6.00%" },
+            { "Завершен", "2", "4.00%" }
             };
-
             tables.Add(movementTable);
         }
 

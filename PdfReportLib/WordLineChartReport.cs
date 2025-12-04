@@ -2,9 +2,9 @@
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-using ReportContracts;
+using ContractLib;
 
-namespace ReportsLib;
+namespace WordDocReportLib;
 
 public class WordLineChartReport : IRDocWithChartLineC
 {
