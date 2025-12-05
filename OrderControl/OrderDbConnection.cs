@@ -147,31 +147,41 @@ public class OrderDbConnection
         }
     }
 
-    public Dictionary<string, List<(int Parameter, double Value)>> GetOrdersByCityAndDate()
+    public Dictionary<string, List<(string Date, double Value)>> GetOrdersByCityAndDateWithString()
     {
-        var result = new Dictionary<string, List<(int Parameter, double Value)>>(); // CHANGE
+        var result = new Dictionary<string, List<(string Date, double Value)>>();
 
-        using (var connection = new NpgsqlConnection(_connectionString))
+        try
         {
-            var query = @"
-            SELECT destination, 
-                   EXTRACT(DAY FROM receivedate) as day,
-                   COUNT(*) as count
-            FROM orders 
-            WHERE receivedate >= CURRENT_DATE - INTERVAL '30 days'
-            GROUP BY destination, EXTRACT(DAY FROM receivedate)
-            ORDER BY destination, day";
-
-            var data = connection.Query<(string City, int Day, int Count)>(query);
-
-            foreach (var item in data)
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
-                if (!result.ContainsKey(item.City))
-                    result[item.City] = new List<(int Parameter, double Value)>();
+                // Возвращаем дату как строку в формате DD.MM.YYYY
+                var query = @"
+                SELECT 
+                    destination as City,
+                    TO_CHAR(receivedate, 'DD.MM.YYYY') as OrderDate, -- Прямо в БД форматируем как строку
+                    COUNT(*) as OrderCount
+                FROM orders 
+                WHERE receivedate >= CURRENT_DATE - INTERVAL '30 days'
+                GROUP BY destination, TO_CHAR(receivedate, 'DD.MM.YYYY')
+                ORDER BY destination, receivedate";
 
-                result[item.City].Add((item.Day, item.Count));
-                // >> tuple names don't matter for assignment
+                var data = connection.Query<(string City, string OrderDate, int OrderCount)>(query);
+
+                foreach (var item in data)
+                {
+                    if (!result.ContainsKey(item.City))
+                        result[item.City] = new List<(string Date, double Value)>();
+
+                    result[item.City].Add((item.OrderDate, item.OrderCount));
+                }
+
+                Console.WriteLine($"Получено данных: {result.Count} городов, всего записей: {result.Sum(x => x.Value.Count)}");
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка в GetOrdersByCityAndDateWithString: {ex.Message}");
         }
 
         return result;

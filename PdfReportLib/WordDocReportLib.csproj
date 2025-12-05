@@ -17,6 +17,14 @@
 	<Target Name="CopyToRPlugins" AfterTargets="Build">
 		<Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
 			  DestinationFiles="$(SolutionDir)FormComponentDisplay\bin\Debug\net9.0-windows\RPlugins\$(AssemblyName).dll" />
+
+		<!-- Копируем все зависимости -->
+		<ItemGroup>
+			<AllOutputFiles Include="$(OutputPath)\*.dll" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(AllOutputFiles)"
+			  DestinationFiles="@(AllOutputFiles->'$(SolutionDir)FormComponentDisplay\bin\Debug\net9.0-windows\RPlugins\%(Filename)%(Extension)')" />
 	</Target>
 
 </Project>

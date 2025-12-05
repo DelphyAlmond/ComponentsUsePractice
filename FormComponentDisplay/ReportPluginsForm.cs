@@ -31,49 +31,70 @@ public partial class ReportPluginsForm : Form
 
     private void LoadReportPlugins()
     {
-        // Загружаем из папки сборки самого плагина
-        var pluginsPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        var pluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RPlugins");
 
         if (!Directory.Exists(pluginsPath))
-            return;
-
-        foreach (var dllFile in Directory.GetFiles(pluginsPath, "*Plugin*.dll"))
         {
-            try
+            Directory.CreateDirectory(pluginsPath);
+            return;
+        }
+
+        LoadCommonDependencies();
+
+        var pluginFiles = new[]
+        {
+        "ExcelReportLib.dll",
+        "PdfReportLib.dll",
+        "WordDocReportLib.dll"
+        };
+
+        foreach (var pluginFile in pluginFiles)
+        {
+            var dllPath = Path.Combine(pluginsPath, pluginFile);
+            if (File.Exists(dllPath))
             {
-                var assembly = Assembly.LoadFrom(dllFile);
-                LoadPluginsFromAssembly(assembly);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки плагина {dllFile}: {ex.Message}");
+                try
+                {
+                    var assembly = Assembly.LoadFrom(dllPath);
+                    LoadPluginsFromAssembly(assembly);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка загрузки плагина {pluginFile}: {ex.Message}");
+                }
             }
         }
     }
 
     private void LoadCommonDependencies()
     {
+        var pluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RPlugins");
+
+        if (!Directory.Exists(pluginsPath))
+            return;
+
+        // Порядок важен - сначала загружаем базовые зависимости
         var dependencies = new[]
         {
         "DocumentFormat.OpenXml",
         "EPPlus",
-        "itext7"
-    };
-
-        var pluginsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RPlugins");
+        "itext7",
+        "BouncyCastle.Crypto" // Для iText7
+        };
 
         foreach (var dep in dependencies)
         {
-            var dllPath = Path.Combine(pluginsPath, $"{dep}.dll");
-            if (File.Exists(dllPath))
+            var dllFiles = Directory.GetFiles(pluginsPath, $"{dep}*.dll");
+            foreach (var dllPath in dllFiles)
             {
                 try
                 {
                     Assembly.LoadFrom(dllPath);
+                    Console.WriteLine($"Загружена зависимость: {Path.GetFileName(dllPath)}");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Игнорируем ошибки загрузки зависимостей
+                    Console.WriteLine($"Не удалось загрузить {dep}: {ex.Message}");
                 }
             }
         }
@@ -81,20 +102,31 @@ public partial class ReportPluginsForm : Form
 
     private void LoadPluginsFromAssembly(Assembly assembly)
     {
-        foreach (var type in assembly.GetTypes())
+        try
         {
-            if (typeof(IReportDocumentC).IsAssignableFrom(type) &&
-                !type.IsInterface && !type.IsAbstract)
+            foreach (var type in assembly.GetTypes())
             {
-                try
+                if (typeof(IReportDocumentC).IsAssignableFrom(type) &&
+                    !type.IsInterface && !type.IsAbstract)
                 {
-                    var plugin = (IReportDocumentC)Activator.CreateInstance(type);
-                    _loadedPlugins.Add(plugin);
+                    try
+                    {
+                        var plugin = (IReportDocumentC)Activator.CreateInstance(type);
+                        _loadedPlugins.Add(plugin);
+                        Console.WriteLine($"Загружен плагин: {type.Name} ({plugin.DocumentFormat})");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка создания плагина {type.Name}: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error creating plugin {type.Name}: {ex.Message}");
-                }
+            }
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            foreach (var loaderEx in ex.LoaderExceptions)
+            {
+                MessageBox.Show($"Ошибка загрузки типа: {loaderEx?.Message}");
             }
         }
     }
@@ -224,11 +256,12 @@ public partial class ReportPluginsForm : Form
         }
         else if (plugin is IRDocWithChartLineC chartPlugin)
         {
+            // Теперь передаем Dictionary<string, List<(string Date, double Value)>>
             await chartPlugin.CreateDocumentAsync(
                 fileName,
-                "Отчет по заказам по городам и датам",
+                "Аналитический отчет по динамике заказов",
                 "Динамика поступления заказов по городам",
-                (Dictionary<string, List<(int Parameter, double Value)>>)data
+                (Dictionary<string, List<(string Date, double Value)>>)data // string DateTime *
             );
         }
         else if (plugin is IRDocWithTableColumnRowHeaderC excelPlugin)
@@ -236,14 +269,15 @@ public partial class ReportPluginsForm : Form
             var reportData = (List<OrderReportDto>)data;
             var headers = new List<(string Header, string PropertyName, string FieldName)>
             {
-                ("Идентификатор", "Id", "Id"),
-                ("ФИО заказчика", "CustomerName", "CustomerName"),
-                ("Город назначения", "City", "City"),
-                ("Дата получения", "ReceiveDate", "ReceiveDate")
+            ("Идентификатор", "Id", "Id"),
+            ("ФИО заказчика", "CustomerName", "CustomerName"),
+            ("Город назначения", "City", "City"),
+            ("Дата получения", "ReceiveDate", "ReceiveDate"),
+            ("Статус заказа", "MovementNotes", "MovementNotes")
             };
 
-            var columnsWidth = new List<int> { 40, 30, 20, 15 };
-            var rowsHeights = Enumerable.Repeat(20, reportData.Count + 2).ToList();
+            var columnsWidth = new List<int> { 40, 40, 25, 20, 25 };
+            var rowsHeights = Enumerable.Repeat(20, Math.Max(reportData.Count + 2, 10)).ToList();
 
             await excelPlugin.CreateDocumentAsync(
                 fileName,
@@ -267,94 +301,241 @@ public partial class ReportPluginsForm : Form
 
             if (orders != null && orders.Any())
             {
-                // Группируем по MovementNotes - исправляем фильтрацию
+                Console.WriteLine($"Найдено заказов в БД: {orders.Count}");
+
+                // 1. Таблица статусов
                 var statusGroups = orders
-                    .GroupBy(o => o.MovementNotes ?? "Без статуса") // Добавляем обработку null
-                    .Where(g => !string.IsNullOrEmpty(g.Key)) // Исключаем пустые
+                    .Where(o => !string.IsNullOrEmpty(o.MovementNotes))
+                    .GroupBy(o => o.MovementNotes.Trim()) // Убираем пробелы
+                    .OrderByDescending(g => g.Count())
                     .ToList();
 
-                // Создаем таблицу: +1 для заголовка
-                string[,] movementTable = new string[statusGroups.Count + 1, 3];
+                Console.WriteLine($"Уникальных статусов: {statusGroups.Count}");
 
-                // Заголовок
-                movementTable[0, 0] = "Статус движения";
-                movementTable[0, 1] = "Количество";
-                movementTable[0, 2] = "Процент (%)";
-
-                int totalOrders = orders.Count;
-
-                // Заполняем данные
-                for (int i = 0; i < statusGroups.Count; i++)
+                if (statusGroups.Any())
                 {
-                    var group = statusGroups[i];
-                    movementTable[i + 1, 0] = group.Key;
-                    movementTable[i + 1, 1] = group.Count().ToString();
+                    string[,] statusTable = new string[statusGroups.Count + 1, 3];
 
-                    // Исправляем расчет процента
-                    if (totalOrders > 0)
+                    // Заголовок
+                    statusTable[0, 0] = "Статус заказа";
+                    statusTable[0, 1] = "Количество";
+                    statusTable[0, 2] = "Процент";
+
+                    int totalOrders = orders.Count;
+
+                    // Данные
+                    for (int i = 0; i < statusGroups.Count; i++)
                     {
-                        double percentage = (group.Count() * 100.0) / totalOrders;
-                        movementTable[i + 1, 2] = percentage.ToString("F2") + "%";
+                        var group = statusGroups[i];
+                        var statusName = group.Key;
+                        var count = group.Count();
+
+                        // Убедимся, что статус не пустой
+                        if (string.IsNullOrWhiteSpace(statusName))
+                            statusName = "Без статуса";
+
+                        statusTable[i + 1, 0] = statusName;
+                        statusTable[i + 1, 1] = count.ToString();
+
+                        if (totalOrders > 0)
+                        {
+                            double percentage = (count * 100.0) / totalOrders;
+                            statusTable[i + 1, 2] = $"{percentage:F1}%";
+                        }
+                        else
+                        {
+                            statusTable[i + 1, 2] = "0.0%";
+                        }
+
+                        Console.WriteLine($"  Статус: '{statusTable[i + 1, 0]}', Кол-во: {statusTable[i + 1, 1]}, %: {statusTable[i + 1, 2]}");
                     }
-                    else
-                    {
-                        movementTable[i + 1, 2] = "0.00%";
-                    }
+
+                    tables.Add(statusTable);
+                    Console.WriteLine("Таблица статусов создана");
+                }
+                else
+                {
+                    Console.WriteLine("Нет данных по статусам");
                 }
 
-                tables.Add(movementTable);
+                // 2. Таблица городов
+                var cityGroups = orders
+                    .Where(o => !string.IsNullOrEmpty(o.Destination))
+                    .GroupBy(o => o.Destination.Trim())
+                    .OrderByDescending(g => g.Count())
+                    .ToList();
+
+                Console.WriteLine($"Уникальных городов: {cityGroups.Count}");
+
+                if (cityGroups.Any())
+                {
+                    string[,] cityTable = new string[cityGroups.Count + 1, 3];
+
+                    // Заголовок
+                    cityTable[0, 0] = "Город назначения";
+                    cityTable[0, 1] = "Количество заказов";
+                    cityTable[0, 2] = "Доля";
+
+                    int totalOrders = orders.Count;
+
+                    // Данные
+                    for (int i = 0; i < cityGroups.Count; i++)
+                    {
+                        var group = cityGroups[i];
+                        var cityName = group.Key;
+                        var count = group.Count();
+
+                        if (string.IsNullOrWhiteSpace(cityName))
+                            cityName = "Не указан";
+
+                        cityTable[i + 1, 0] = cityName;
+                        cityTable[i + 1, 1] = count.ToString();
+
+                        if (totalOrders > 0)
+                        {
+                            double percentage = (count * 100.0) / totalOrders;
+                            cityTable[i + 1, 2] = $"{percentage:F1}%";
+                        }
+                        else
+                        {
+                            cityTable[i + 1, 2] = "0.0%";
+                        }
+
+                        Console.WriteLine($"  Город: '{cityTable[i + 1, 0]}', Кол-во: {cityTable[i + 1, 1]}, %: {cityTable[i + 1, 2]}");
+                    }
+
+                    tables.Add(cityTable);
+                    Console.WriteLine("Таблица городов создана");
+                }
+                else
+                {
+                    Console.WriteLine("Нет данных по городам");
+                }
+            }
+            else
+            {
+                Console.WriteLine("БД пустая или ошибка получения данных");
+                // Используем тестовые данные
+                tables = GetFallbackTables();
             }
         }
         catch (Exception ex)
         {
-            // Fallback данные - исправляем структуру
-            string[,] movementTable = new string[7, 3]
-            {
-            { "Статус движения", "Количество", "Процент (%)" },
-            { "Создан", "10", "20.00%" },
-            { "Обработан", "15", "30.00%" },
-            { "В пути", "8", "16.00%" },
-            { "Доставлен", "12", "24.00%" },
-            { "Получен", "3", "6.00%" },
-            { "Завершен", "2", "4.00%" }
-            };
-            tables.Add(movementTable);
+            Console.WriteLine($"Ошибка: {ex.Message}");
+            // Используем тестовые данные
+            tables = GetFallbackTables();
         }
+
+        Console.WriteLine($"Итого таблиц для PDF: {tables.Count}");
 
         return tables;
     }
 
-    private Dictionary<string, List<(int Parameter, double Value)>> PrepareChartData()
+    private List<string[,]> GetFallbackTables()
     {
-        var chartData = new Dictionary<string, List<(int, double)>>();
+        var tables = new List<string[,]>();
 
+        Console.WriteLine("Используем тестовые данные для PDF");
+
+        // Тестовая таблица статусов
+        string[,] statusTable = new string[6, 3]
+        {
+        { "Статус заказа", "Количество", "Процент" },
+        { "Создан", "12", "24.0%" },
+        { "Обработан", "10", "20.0%" },
+        { "В пути", "8", "16.0%" },
+        { "Доставлен", "15", "30.0%" },
+        { "Завершен", "5", "10.0%" }
+        };
+
+        // Тестовая таблица городов
+        string[,] cityTable = new string[5, 3]
+        {
+        { "Город назначения", "Количество заказов", "Доля" },
+        { "Москва", "18", "36.0%" },
+        { "Санкт-Петербург", "12", "24.0%" },
+        { "Новосибирск", "8", "16.0%" },
+        { "Казань", "7", "14.0%" }
+        };
+
+        tables.Add(statusTable);
+        tables.Add(cityTable);
+
+        return tables;
+    }
+
+    private Dictionary<string, List<(string Date, double Value)>> PrepareChartData()
+    {
         try
         {
-            return _centralDb.GetOrdersByCityAndDate();
+            Console.WriteLine("Подготовка данных для Word отчета...");
+
+            // Пробуем получить данные со строками
+            var data = _centralDb.GetOrdersByCityAndDateWithString();
+
+            if (data == null || !data.Any())
+            {
+                Console.WriteLine("Нет данных из БД. Используем демонстрационные данные.");
+                return CreateSimpleStringDemoData();
+            }
+
+            Console.WriteLine($"Получено данных из БД: {data.Count} городов");
+
+            // Сортируем данные по дате для каждого города
+            foreach (var city in data.Keys.ToList())
+            {
+                var sortedData = data[city]
+                    .OrderBy(x =>
+                    {
+                        // Сортируем по дате, пытаясь распарсить
+                        if (DateTime.TryParse(x.Date, out DateTime parsedDate))
+                            return parsedDate;
+                        return DateTime.MinValue;
+                    })
+                    .ToList();
+                data[city] = sortedData;
+            }
+
+            return data;
         }
         catch (Exception ex)
         {
-            // Fallback to example data
-            chartData["Москва"] = new List<(int, double)>
-                {
-                    (1, 5), (2, 8), (3, 12), (4, 7), (5, 10),
-                    (6, 15), (7, 18), (8, 14), (9, 16), (10, 20)
-                };
+            Console.WriteLine($"Ошибка при подготовке данных: {ex.Message}");
+            return CreateSimpleStringDemoData();
+        }
+    }
 
-            chartData["Санкт-Петербург"] = new List<(int, double)>
-                {
-                    (1, 3), (2, 5), (3, 8), (4, 6), (5, 9),
-                    (6, 12), (7, 15), (8, 11), (9, 13), (10, 17)
-                };
+    private Dictionary<string, List<(string Date, double Value)>> CreateSimpleStringDemoData()
+    {
+        var result = new Dictionary<string, List<(string Date, double Value)>>();
+        var startDate = DateTime.Today.AddDays(-15);
+        Random rnd = new Random();
 
-            chartData["Новосибирск"] = new List<(int, double)>
-                {
-                    (1, 2), (2, 4), (3, 6), (4, 5), (5, 7),
-                    (6, 9), (7, 11), (8, 8), (9, 10), (10, 12)
-                };
+        var cities = new[]
+        {
+        "Москва",
+        "Санкт-Петербург",
+        "Новосибирск"
+    };
+
+        foreach (var city in cities)
+        {
+            var data = new List<(string Date, double Value)>();
+
+            for (int i = 0; i < 10; i++) // Только 10 дней для простоты
+            {
+                var date = startDate.AddDays(i);
+                var dateString = date.ToString("dd.MM.yyyy");
+                var value = rnd.Next(1, 12);
+
+                data.Add((dateString, value));
+            }
+
+            result[city] = data;
         }
 
-        return chartData;
+        Console.WriteLine("Созданы демонстрационные данные");
+        return result;
     }
 
     private List<OrderReportDto> PrepareExcelReportData()
@@ -362,41 +543,72 @@ public partial class ReportPluginsForm : Form
         var reportData = new List<OrderReportDto>();
         try
         {
-            return _centralDb.GetOrdersForExcelReport();
+            var data = _centralDb.GetOrdersForExcelReport();
+
+            // Форматируем даты для лучшей читаемости
+            foreach (var item in data)
+            {
+                if (DateTime.TryParse(item.ReceiveDate, out DateTime date))
+                {
+                    item.ReceiveDate = date.ToString("dd.MM.yyyy");
+                }
+            }
+
+            // Сортируем по городу, затем по дате
+            return data
+                .OrderBy(x => x.City)
+                .ThenByDescending(x => x.ReceiveDate)
+                .ToList();
         }
         catch (Exception ex)
         {
-            // Fallback to example data
+            // Fallback данные с реальными городами из вашей БД
             reportData = new List<OrderReportDto>
+        {
+            new OrderReportDto
             {
-                new OrderReportDto
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerName = "Иванов Иван Иванович",
-                    City = "Москва",
-                    ReceiveDate = "2024.01.15",
-                    MovementNotes = "Создан"
-                },
-                new OrderReportDto
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerName = "Петров Петр Петрович",
-                    City = "Санкт-Петербург",
-                    ReceiveDate = "2024.01.16",
-                    MovementNotes = "Обработан"
-                },
-                new OrderReportDto
-                {
-                    Id = Guid.NewGuid(),
-                    CustomerName = "Сидорова Анна Владимировна",
-                    City = "Новосибирск",
-                    ReceiveDate = "2024.01.17",
-                    MovementNotes = "В пути"
-                }
-            };
-        }
+                Id = Guid.NewGuid(),
+                CustomerName = "Иванов Иван Иванович",
+                City = "Москва",
+                ReceiveDate = "15.01.2024",
+                MovementNotes = "Создан"
+            },
+            new OrderReportDto
+            {
+                Id = Guid.NewGuid(),
+                CustomerName = "Петров Петр Петрович",
+                City = "Санкт-Петербург",
+                ReceiveDate = "16.01.2024",
+                MovementNotes = "Обработан"
+            },
+            new OrderReportDto
+            {
+                Id = Guid.NewGuid(),
+                CustomerName = "Сидорова Анна Владимировна",
+                City = "Новосибирск",
+                ReceiveDate = "17.01.2024",
+                MovementNotes = "В пути"
+            },
+            new OrderReportDto
+            {
+                Id = Guid.NewGuid(),
+                CustomerName = "Кузнецов Алексей Сергеевич",
+                City = "Екатеринбург",
+                ReceiveDate = "18.01.2024",
+                MovementNotes = "Доставлен"
+            },
+            new OrderReportDto
+            {
+                Id = Guid.NewGuid(),
+                CustomerName = "Смирнова Мария Дмитриевна",
+                City = "Казань",
+                ReceiveDate = "19.01.2024",
+                MovementNotes = "Получен"
+            }
+        };
 
-        return reportData;
+            return reportData;
+        }
     }
 
     private object GetReportData(IReportDocumentC plugin)

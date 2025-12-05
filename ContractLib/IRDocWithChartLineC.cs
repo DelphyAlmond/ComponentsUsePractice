@@ -6,8 +6,7 @@ public interface IRDocWithChartLineC : IReportDocumentC
     Task CreateDocumentAsync(
         string filePath,
         string header,
-        string chartTitle, // Заголовок диаграммы
-        Dictionary<string, List<(int Parameter, double Value)>> series
-        // ^ Словарь серий с данными для линейной диаграммы
+        string chartTitle,
+        Dictionary<string, List<(string Date, double Value)>> series // for full DateTime *
     );
 }

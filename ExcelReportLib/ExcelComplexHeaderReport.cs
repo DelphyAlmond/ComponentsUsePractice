@@ -19,6 +19,8 @@ public class ExcelComplexHeaderReport : IRDocWithTableColumnRowHeaderC
     {
         await Task.Run(() =>
         {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // *
+
             using (var package = new ExcelPackage())
             {
                 var worksheet = package.Workbook.Worksheets.Add("Отчет по заказам");
