@@ -155,33 +155,46 @@ public class OrderDbConnection
         {
             using (var connection = new NpgsqlConnection(_connectionString))
             {
-                // Возвращаем дату как строку в формате DD.MM.YYYY
+                // VARCHAR 'YYYY-MM-DD', нужно преобразовать в DATE
                 var query = @"
-                SELECT 
-                    destination as City,
-                    TO_CHAR(receivedate, 'DD.MM.YYYY') as OrderDate, -- Прямо в БД форматируем как строку
-                    COUNT(*) as OrderCount
-                FROM orders 
-                WHERE receivedate >= CURRENT_DATE - INTERVAL '30 days'
-                GROUP BY destination, TO_CHAR(receivedate, 'DD.MM.YYYY')
-                ORDER BY destination, receivedate";
+                    SELECT 
+                        destination as City,
+                        receivedate as OrderDate,  -- Уже строка в формате 'YYYY-MM-DD'
+                        COUNT(*) as OrderCount
+                    FROM orders 
+                    WHERE destination IS NOT NULL 
+                      AND receivedate IS NOT NULL
+                      AND receivedate ~ '^\d{4}-\d{2}-\d{2}$' -- Проверяем формат даты
+                    GROUP BY destination, receivedate
+                    ORDER BY destination, receivedate";
 
                 var data = connection.Query<(string City, string OrderDate, int OrderCount)>(query);
 
                 foreach (var item in data)
                 {
+                    if (string.IsNullOrEmpty(item.City))
+                        continue;
+
                     if (!result.ContainsKey(item.City))
                         result[item.City] = new List<(string Date, double Value)>();
 
-                    result[item.City].Add((item.OrderDate, item.OrderCount));
+                    // Преобразуем 'YYYY-MM-DD' в 'DD.MM.YYYY'
+                    if (DateTime.TryParse(item.OrderDate, out DateTime date))
+                    {
+                        var formattedDate = date.ToString("dd.MM.yyyy");
+                        result[item.City].Add((formattedDate, item.OrderCount));
+                    }
+                    else
+                    {
+                        // Если не удалось распарсить, оставляем как есть
+                        result[item.City].Add((item.OrderDate, item.OrderCount));
+                    }
                 }
-
-                Console.WriteLine($"Получено данных: {result.Count} городов, всего записей: {result.Sum(x => x.Value.Count)}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка в GetOrdersByCityAndDateWithString: {ex.Message}");
+            Console.WriteLine($"Ошибка: {ex.Message}");
         }
 
         return result;

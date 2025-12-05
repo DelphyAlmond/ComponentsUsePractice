@@ -468,30 +468,20 @@ public partial class ReportPluginsForm : Form
     {
         try
         {
-            Console.WriteLine("Подготовка данных для Word отчета...");
-
-            // Пробуем получить данные со строками
+            // Получаем данные из БД
             var data = _centralDb.GetOrdersByCityAndDateWithString();
 
             if (data == null || !data.Any())
             {
-                Console.WriteLine("Нет данных из БД. Используем демонстрационные данные.");
-                return CreateSimpleStringDemoData();
+                // Если данных нет, создаем простые демо-данные
+                return CreateSimpleDemoData();
             }
-
-            Console.WriteLine($"Получено данных из БД: {data.Count} городов");
 
             // Сортируем данные по дате для каждого города
             foreach (var city in data.Keys.ToList())
             {
                 var sortedData = data[city]
-                    .OrderBy(x =>
-                    {
-                        // Сортируем по дате, пытаясь распарсить
-                        if (DateTime.TryParse(x.Date, out DateTime parsedDate))
-                            return parsedDate;
-                        return DateTime.MinValue;
-                    })
+                    .OrderBy(x => x.Date)
                     .ToList();
                 data[city] = sortedData;
             }
@@ -500,41 +490,66 @@ public partial class ReportPluginsForm : Form
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при подготовке данных: {ex.Message}");
-            return CreateSimpleStringDemoData();
+            // В случае ошибки - демо-данные
+            return CreateSimpleDemoData();
         }
     }
 
-    private Dictionary<string, List<(string Date, double Value)>> CreateSimpleStringDemoData()
+    private Dictionary<string, List<(string Date, double Value)>> CreateSimpleDemoData()
     {
         var result = new Dictionary<string, List<(string Date, double Value)>>();
-        var startDate = DateTime.Today.AddDays(-15);
-        Random rnd = new Random();
 
-        var cities = new[]
+        // Данные на основе тестовых записей из БД
+        result["Москва"] = new List<(string Date, double Value)>
         {
-        "Москва",
-        "Санкт-Петербург",
-        "Новосибирск"
-    };
+            ("15.01.2024", 1)
+        };
 
-        foreach (var city in cities)
+        result["Санкт-Петербург"] = new List<(string Date, double Value)>
         {
-            var data = new List<(string Date, double Value)>();
+            ("16.01.2024", 1)
+        };
 
-            for (int i = 0; i < 10; i++) // Только 10 дней для простоты
-            {
-                var date = startDate.AddDays(i);
-                var dateString = date.ToString("dd.MM.yyyy");
-                var value = rnd.Next(1, 12);
+        result["Новосибирск"] = new List<(string Date, double Value)>
+        {
+            ("17.01.2024", 1)
+        };
 
-                data.Add((dateString, value));
-            }
+        result["Екатеринбург"] = new List<(string Date, double Value)>
+        {
+            ("18.01.2024", 1)
+        };
 
-            result[city] = data;
-        }
+        result["Казань"] = new List<(string Date, double Value)>
+        {
+            ("19.01.2024", 1)
+        };
 
-        Console.WriteLine("Созданы демонстрационные данные");
+        result["Нижний Новгород"] = new List<(string Date, double Value)>
+        {
+            ("20.01.2024", 1)
+        };
+
+        result["Ульяновск"] = new List<(string Date, double Value)>
+        {
+            ("21.01.2024", 1)
+        };
+
+        result["Самара"] = new List<(string Date, double Value)>
+        {
+            ("22.01.2024", 1)
+        };
+
+        result["Омск"] = new List<(string Date, double Value)>
+        {
+            ("23.01.2024", 1)
+        };
+
+        result["Ростов-на-Дону"] = new List<(string Date, double Value)>
+        {
+            ("24.01.2024", 1)
+        };
+
         return result;
     }
 
